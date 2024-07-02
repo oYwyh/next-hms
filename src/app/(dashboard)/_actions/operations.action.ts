@@ -15,7 +15,7 @@ export async function add(
   role: "user" | "admin" | "doctor" = "user",
 ) {
   const { username, firstname, lastname, phone, nationalId, age, gender, password, email } = data;
-  const result = await uniqueColumnsValidations(data)
+  const result = await uniqueColumnsValidations(username, email, phone, nationalId)
   if (result?.error) return { error: result?.error };
   const passwordHash = await hash(password, {
     memoryCost: 19456,
@@ -56,23 +56,4 @@ export async function add(
   }
 }
 
-export async function edit(
-  data: TbaseSchema,
-  selectedDays: string[] = [],
-  selectedHours: { day: string; value: string }[] = [],
-  role: "user" | "admin" | "doctor" = "user",
-  userId: string,
-  operation: "add" | "edit",
-  differentFields: string[]
-) {
-  const result = await uniqueColumnsValidations(data, differentFields);
-  if (result?.error) return { error: result?.error };
-
-  const doctor = await doctorRole(data, role, selectedDays, selectedHours, userId, operation, differentFields);
-
-  if (doctor?.done) {
-    return {
-      done: true
-    };
-  }
-}
+z

@@ -30,7 +30,6 @@ import {
 } from "@/components/ui/popover"
 
 import { add, edit } from "@/app/(dashboard)/_actions/operations.action";
-import { log } from "console";
 
 type HourTypes = { day: string; value: string };
 
@@ -41,12 +40,7 @@ export default function Edit({ operation, userId, userData }: { operation: "add"
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [selectedHours, setSelectedHours] = useState<HourTypes[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [differentFields, setDifferentFields] = useState<string[]>([]);
   const hoursList: HourTypes[] = [];
-
-  useEffect(() => {
-    console.log(differentFields)
-  }, [differentFields])
 
 
   const formatTime = (time: string) => {
@@ -90,6 +84,7 @@ export default function Edit({ operation, userId, userData }: { operation: "add"
       return;
     }
 
+    // Check if each selected day has at least one hour range
     const daysWithHours = new Set(selectedHours.map(hour => hour.day));
     const allDaysHaveHours = selectedDays.every(day => daysWithHours.has(day));
 
@@ -98,25 +93,20 @@ export default function Edit({ operation, userId, userData }: { operation: "add"
       return;
     }
 
-    setError(null);
+    setError(null); // Clear previous error if any
 
-    const fieldsToCompare = ['username', 'firstname', 'lastname', 'phone', 'nationalId', 'age', 'gender', 'email'];
-    const differentFieldsArray: string[] = [];
+    // // Compare form data with userData and log any matching fields
+    // for (const [field, value] of Object.entries(data)) {
+    //   if (userData && field in userData && userData[field as keyof typeof userData] === value) {
+    //     form.setError(field as keyof TaddSchema, {
+    //       type: "server",
+    //       message: `${field} has the same value in both the form data and the userData.`,
+    //     });
+    //     return;
+    //   }
+    // }
 
-    fieldsToCompare.forEach((field) => {
-      if (data[field] !== userData[field]) {
-        differentFieldsArray.push(field);
-      }
-    });
-
-    setDifferentFields(differentFieldsArray);
-
-    if (differentFieldsArray.length === 0) {
-      setError("No changes detected");
-      return;
-    }
-
-    const result = await edit(data, selectedDays, selectedHours, "doctor", userId, operation, differentFieldsArray);
+    const result = await edit(data, selectedDays, selectedHours, "doctor", userId, operation);
 
     if (result?.done) {
       form.reset();
@@ -132,10 +122,6 @@ export default function Edit({ operation, userId, userData }: { operation: "add"
       }
     }
   };
-
-
-
-
   return (
     <div>
       <Dialog open={open} onOpenChange={setOpen}>
