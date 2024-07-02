@@ -1,31 +1,24 @@
 "use server";
 
-import { lucia, validateRequest } from "@/lib/auth";
 import db from "@/lib/db";
-import { adminTable, doctorTable, userTable, workDaysTable, workHoursTable } from "@/lib/db/schema";
+import { lucia, validateRequest } from "@/lib/auth";
+import { userTable } from "@/lib/db/schema";
 import { TcheckSchema, TsignInSchema, TsignUpSchema } from "@/app/auth/types";
-import { columnsRegex } from "@/lib/types";
+import { TbaseSchema, columnsRegex } from "@/lib/types";
 import { uniqueColumnsValidations } from "@/lib/funcs";
 import { hash, verify } from "@node-rs/argon2";
-import { error } from "console";
 import { generateIdFromEntropySize } from "lucia";
-import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { TaddSchema } from "@/app/(dashboard)/types";
 
-type InsertedCredit = {
-  column: 'email' | 'phone' | 'nationalId' | 'username' | string;
-  credit: string;
-};
-
-export async function signup(data: any, selectedDays?: string[], selectedHours?: string[], role: ("user" | "admin" | "doctor") = "user") {
-
+export async function signup(
+  data: TbaseSchema,
+) {
   const { username, firstname, lastname, phone, nationalId, age, gender, password, email } = data;
 
-  const result = await uniqueColumnsValidations(username, email, phone, nationalId)  
+  const result = await uniqueColumnsValidations(username, email, phone, nationalId)
 
-  if(result?.error) return { error: result?.error };
+  if (result?.error) return { error: result?.error };
 
   const passwordHash = await hash(password, {
     memoryCost: 19456,
@@ -47,51 +40,13 @@ export async function signup(data: any, selectedDays?: string[], selectedHours?:
     age,
     gender,
     password: passwordHash,
-    role: role,
+    role: 'user',
   });
-
-  const isDoctor = await db.query.userTable.findFirst({
-    columns: { role: true },
-    where: (userTable, funcs) => funcs.eq(userTable.id, userId),
-  });
-
-  if (isDoctor?.role === "doctor") {
-    const doctor = await db.insert(doctorTable).values({
-      user_id: userId,
-      specialty: "something",
-    }).returning({ id: doctorTable.id });
-  
-    if (selectedDays !== undefined && selectedDays.length > 0 && selectedHours !== undefined && selectedHours.length > 0) {
-      for (const day of selectedDays) {
-        const workDay = await db.insert(workDaysTable).values({
-          doctorId: String(doctor[0].id),
-          day: day
-        }).returning({ id: workDaysTable.id });
-  
-        for (const timeRange of selectedHours) {
-          const [startAt, endAt] = timeRange.split('-');
-          console.log(`Start: ${startAt}, End: ${endAt}`);
-          await db.insert(workHoursTable).values({
-            workDayId: String(workDay[0].id),
-            startAt: startAt,
-            endAt: endAt
-          });
-        }
-      }
-    }
-    revalidatePath('/admin/manage/doctors');
-    return {
-      done: true,
-    };
-  }
-  
-
-  
 
   const session = await lucia.createSession(userId, {});
   const sessionCookie = lucia.createSessionCookie(session.id);
   cookies().set(sessionCookie.name, sessionCookie.value, sessionCookie.attributes);
-      
+
   return redirect("/");
 }
 
@@ -102,10 +57,10 @@ export async function signin(data: TsignInSchema) {
   const { column, credit, password } = data;
 
   const existingUser = await db.query.userTable.findFirst({
-    where: (userTable: {[key: string]: any}, funcs) => funcs.eq(userTable[column], credit),
+    where: (userTable: { [key: string]: any }, funcs) => funcs.eq(userTable[column], credit),
   });
 
-  if(existingUser) {
+  if (existingUser) {
     const validPassword = await verify(existingUser.password, password, {
       memoryCost: 19456,
       timeCost: 2,
@@ -113,12 +68,12 @@ export async function signin(data: TsignInSchema) {
       parallelism: 1,
     });
 
-    if(!validPassword) {
+    if (!validPassword) {
       return {
         error: 'Invalid Password'
       }
     }
-  
+
     const session = await lucia.createSession(existingUser.id, {});
     const sessionCookie = lucia.createSessionCookie(session.id);
     cookies().set(
@@ -127,7 +82,7 @@ export async function signin(data: TsignInSchema) {
       sessionCookie.attributes,
     );
     return redirect("/");
-  }else {
+  } else {
     throw new Error('Invalid email or password');
   }
 }
@@ -152,7 +107,7 @@ export async function logout() {
 }
 
 export async function checkCredit(data: TcheckSchema) {
-  
+
   const { credit } = data;
 
   const columns = ['email', 'phone', 'nationalId', 'username'] as const;
@@ -164,8 +119,8 @@ export async function checkCredit(data: TcheckSchema) {
       phone: true,
       nationalId: true,
     },
-    
-    where: (userTable, { eq, or }) => 
+
+    where: (userTable, { eq, or }) =>
       or(
         ...columns.map(column => eq(userTable[column], credit))
       ),

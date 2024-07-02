@@ -1,6 +1,6 @@
-"use client";
+'use client'
 
-import { daysList } from "@/lib/types";
+import { TbaseSchema, daysList } from "@/lib/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Form, FormMessage } from "@/components/ui/form";
@@ -29,24 +29,59 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-import { add } from "@/app/(dashboard)/_actions/operations.action";
+import { add, edit } from "@/app/(dashboard)/_actions/operations.action";
+import { log } from "console";
 
 type HourTypes = { day: string; value: string };
 
 
-export default function Add() {
+
+export default function Edit({ operation, userId, userData }: { operation: "add" | "edit", userId: string, userData: TbaseSchema }) {
   const [open, setOpen] = useState(false);
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [selectedHours, setSelectedHours] = useState<HourTypes[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [differentFields, setDifferentFields] = useState<string[]>([]);
   const hoursList: HourTypes[] = [];
 
   useEffect(() => {
-    console.log(selectedHours)
-  }, [selectedHours])
+    console.log(differentFields)
+  }, [differentFields])
+
+
+  const formatTime = (time: string) => {
+    const [hour, minute] = time.split(':');
+    return `${parseInt(hour)}:${minute}`;
+  };
+
+  useEffect(() => {
+    if (userData?.workTime) {
+      const days = userData.workTime.map((entry: { day: string }) => entry.day);
+      const uniqueDays = Array.from(new Set(days));
+      setSelectedDays(uniqueDays);
+
+      const hours = userData.workTime.map((entry: { day: string, workHour: { startAt: string, endAt: string } }) => ({
+        day: entry.day,
+        value: `${formatTime(entry.workHour.startAt)} - ${formatTime(entry.workHour.endAt)}`
+      }));
+      setSelectedHours(hours);
+    }
+  }, [userData]);
+
 
   const form = useForm<TaddSchema>({
     resolver: zodResolver(addSchema),
+    defaultValues: {
+      username: userData?.username || "",
+      firstname: userData?.firstname || "",
+      lastname: userData?.lastname || "",
+      phone: userData?.phone || "",
+      nationalId: userData?.nationalId || "",
+      age: userData?.age || "",
+      gender: userData?.gender || "",
+      email: userData?.email || "",
+      password: "",
+    }
   });
 
   const onSubmit = async (data: TaddSchema) => {
@@ -55,7 +90,6 @@ export default function Add() {
       return;
     }
 
-    // Check if each selected day has at least one hour range
     const daysWithHours = new Set(selectedHours.map(hour => hour.day));
     const allDaysHaveHours = selectedDays.every(day => daysWithHours.has(day));
 
@@ -64,9 +98,25 @@ export default function Add() {
       return;
     }
 
-    setError(null); // Clear previous error if any
+    setError(null);
 
-    const result = await add(data, selectedDays, selectedHours, "doctor");
+    const fieldsToCompare = ['username', 'firstname', 'lastname', 'phone', 'nationalId', 'age', 'gender', 'email'];
+    const differentFieldsArray: string[] = [];
+
+    fieldsToCompare.forEach((field) => {
+      if (data[field] !== userData[field]) {
+        differentFieldsArray.push(field);
+      }
+    });
+
+    setDifferentFields(differentFieldsArray);
+
+    if (differentFieldsArray.length === 0) {
+      setError("No changes detected");
+      return;
+    }
+
+    const result = await edit(data, selectedDays, selectedHours, "doctor", userId, operation, differentFieldsArray);
 
     if (result?.done) {
       form.reset();
@@ -83,15 +133,18 @@ export default function Add() {
     }
   };
 
+
+
+
   return (
     <div>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button variant="outline" className='capitalize'>Add Doctor</Button>
+          <Button variant="outline" className='capitalize'>{operation} Doctor</Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle className='capitalize'>Add Doctor</DialogTitle>
+            <DialogTitle className='capitalize'>{operation} Doctor</DialogTitle>
             <DialogDescription>
               Anyone who has this link will be able to view this.
             </DialogDescription>
@@ -120,7 +173,6 @@ export default function Add() {
                   <FormField form={form} name="confirmPassword" />
                 </div>
                 <div className="pt-4">
-                  setSelectedHours([]);
                   <MultiSelect
                     options={daysList}
                     onValueChange={setSelectedDays}

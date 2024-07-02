@@ -1,5 +1,5 @@
+import { baseSchema } from "@/lib/types";
 import { z } from "zod";
-import { baseSchema, signInSchema, signUpSchema } from "../auth/types";
 
 export const updateProfileSchema = z.object({
     id: z.string().optional(),
@@ -47,7 +47,7 @@ export type TupdateWorkSchema = z.infer<typeof updateWorkSchema>;
 
 
 
-export const addSchema = baseSchema.refine((data) => data.password === data.confirmPassword, {
+export const addSchema = baseSchema.refine((data: { password: string, confirmPassword: string }) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
     path: ['confirmPassword'],
 });

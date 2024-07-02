@@ -59,13 +59,14 @@ export const doctorTable = pgTable("doctor", {
 
 export const workDaysTable = pgTable('work_days', {
   id: serial('id').primaryKey(),
-  doctorId: integer('doctor_id').notNull().references(() => doctorTable.id, { onDelete: 'cascade' }),
+  doctorId: integer('doctor_id').notNull().references(() => doctorTable.id, { onDelete: 'cascade', onUpdate: "cascade" }),
   day: text('day').notNull(), // e.g., 'Monday', 'Tuesday', etc.
 });
 
 export const workHoursTable = pgTable('work_hours', {
   id: serial('id').primaryKey(),
-  workDayId: integer('work_day_id').notNull().references(() => workDaysTable.id, { onDelete: 'cascade' }),
+  workDayId: integer('work_day_id').notNull().references(() => workDaysTable.id, { onDelete: 'cascade', onUpdate: "cascade" }),
+  // day: text('day').notNull(), // e.g., 'Monday', 'Tuesday', etc.
   startAt: time('start_time').notNull(),
   endAt: time('end_time').notNull(),
 });
@@ -89,16 +90,16 @@ export const doctorRelations = relations(doctorTable, ({ many }) => ({
 
 export const workDayRelations = relations(workDaysTable, ({ one, many }) => ({
   doctor: one(doctorTable, {
-      fields: [workDaysTable.doctorId],
-      references: [doctorTable.id],
+    fields: [workDaysTable.doctorId],
+    references: [doctorTable.id],
   }),
   workHours: many(workHoursTable),
 }));
 
 export const workHourRelations = relations(workHoursTable, ({ one }) => ({
   workDay: one(workDaysTable, {
-      fields: [workHoursTable.workDayId],
-      references: [workDaysTable.id],
+    fields: [workHoursTable.workDayId],
+    references: [workDaysTable.id],
   }),
 }));
 
@@ -106,7 +107,7 @@ export const sessionTable = pgTable("session", {
   id: text("id").primaryKey(),
   userId: text("user_id")
     .notNull()
-    .references(() => userTable.id, { onDelete: "cascade" }),
+    .references(() => userTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
   expiresAt: timestamp("expires_at", {
     withTimezone: true,
     mode: "date",

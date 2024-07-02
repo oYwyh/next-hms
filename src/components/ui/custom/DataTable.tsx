@@ -42,7 +42,12 @@ export function DataTable<TData, TValue>({
     []
   )
   const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({})
+    React.useState<VisibilityState>({
+      firstname: false,
+      lastname: false,
+      nationalId: false,
+      gender: false,
+    })
   const [rowSelection, setRowSelection] = React.useState({})
 
   const table = useReactTable({
@@ -88,9 +93,9 @@ export function DataTable<TData, TValue>({
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </TableHead>
                   )
                 })}

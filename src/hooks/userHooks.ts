@@ -1,3 +1,5 @@
+'use server'
+
 import { validateRequest } from "@/lib/auth";
 import db from "@/lib/db";
 
@@ -22,7 +24,15 @@ export const useGetUser = async () => {
       },
       where: (userTable, { eq }) => eq(userTable.id, user.id),
       with: {
-        doctor: true,
+        doctor: {
+          with: {
+            workDays: {
+              with: {
+                workHours: true
+              }
+            }
+          },
+        }
       },
     });
     return doctor;

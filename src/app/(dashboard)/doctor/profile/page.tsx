@@ -1,6 +1,6 @@
 import FormUpdateProfile from "@/app/(dashboard)/_components/FormUpdateProfile";
 import FormUpdatePassword from "@/app/(dashboard)/_components/FormUpdatePassword";
-import { useGetUser } from "@/hooks/useGetUser";
+import { useGetUser } from "@/hooks/userHooks";
 import FormUpdateWork from "../../_components/FormUpdateWork";
 import { DoctorUser } from "@/lib/types";
 import FormUpdatePersonal from "../../_components/FormUpdatePersonal";
@@ -16,24 +16,24 @@ export default async function ProfilePage() {
         <>
           <FormUpdateProfile
             id={user.id}
-            username={user.username} 
-            email={user.email} 
+            username={user.username}
+            email={user.email}
           />
           <FormUpdatePersonal
             id={user.id}
-            firstname={user.firstname} 
-            lastname={user.lastname} 
-            phone={user.phone} 
-            nationalId={user.nationalId} 
-            age={user.age} 
-            gender={user.gender} 
+            firstname={user.firstname}
+            lastname={user.lastname}
+            phone={user.phone}
+            nationalId={user.nationalId}
+            age={user.age}
+            gender={user.gender}
           />
           <FormUpdateWork
             id={user.id}
             doctorId={user.doctor.id}
             specialty={user?.doctor?.specialty}
           />
-          <FormUpdatePassword 
+          <FormUpdatePassword
             id={user.id}
           />
         </>

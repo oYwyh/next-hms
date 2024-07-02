@@ -30,12 +30,6 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 
-import { Command as Cmd } from 'cmdk';
-import { Input } from "./input";
-import { z } from "zod";
-import { hoursList } from "@/lib/types";
-import { TimePicker } from "./custom/time-picker";
-
 const multiSelectVariants = cva(
   "m-1 transition ease-in-out delay-150 hover:-translate-y-1 hover:scale-110 duration-300",
   {
@@ -58,21 +52,25 @@ const multiSelectVariants = cva(
 
 interface MultiSelectProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof multiSelectVariants> {
+  VariantProps<typeof multiSelectVariants> {
   options: {
     label: string;
     value: string;
     icon?: React.ComponentType<{ className?: string }>;
   }[];
+  selectedHours?: { day: string; value: string }[] | undefined;
+  setSelectedHours?: ((value: {
+    day: string;
+    value: string;
+  }[]) => void | undefined) | undefined;
   onValueChange: (value: string[]) => void;
   defaultValue: string[];
   placeholder?: string;
   animation?: number;
   maxCount?: number;
   asChild?: boolean;
+  clearAble?: boolean,
   className?: string;
-  editAble?: boolean;
-  dayId?: string;
 }
 
 export const MultiSelect = React.forwardRef<
@@ -83,6 +81,8 @@ export const MultiSelect = React.forwardRef<
     {
       options,
       onValueChange,
+      selectedHours,
+      setSelectedHours,
       variant,
       defaultValue = [],
       placeholder = "Select options",
@@ -90,7 +90,7 @@ export const MultiSelect = React.forwardRef<
       maxCount = 3,
       asChild = false,
       className,
-      editAble,
+      clearAble,
       ...props
     },
     ref
@@ -116,13 +116,34 @@ export const MultiSelect = React.forwardRef<
         newSelectedValues.pop();
         setSelectedValues(newSelectedValues);
         onValueChange(newSelectedValues);
+
       }
     };
 
     const toggleOption = (value: string) => {
-      const newSelectedValues = selectedValues.includes(value)
-        ? selectedValues.filter((v) => v !== value)
-        : [...selectedValues, value];
+      const newSelectedValues = [];
+
+      if (selectedValues.includes(value)) {
+        // Remove the value if it's already present
+        for (const v of selectedValues) {
+          if (v !== value) {
+            newSelectedValues.push(v);
+          }
+        }
+        if (setSelectedHours && selectedHours) {
+          setSelectedHours((prev) => prev?.filter((hour) => {
+            console.log(hour)
+            return hour.day !== value
+          }));
+        }
+      } else {
+        // Add the value if it's not present
+        for (const v of selectedValues) {
+          newSelectedValues.push(v);
+        }
+        newSelectedValues.push(value);
+      }
+
       setSelectedValues(newSelectedValues);
       onValueChange(newSelectedValues);
     };
@@ -130,6 +151,9 @@ export const MultiSelect = React.forwardRef<
     const handleClear = () => {
       setSelectedValues([]);
       onValueChange([]);
+      if (setSelectedHours && selectedHours) {
+        setSelectedHours([]);
+      }
     };
 
     const handleTogglePopover = () => {
@@ -149,35 +173,6 @@ export const MultiSelect = React.forwardRef<
         const allValues = options.map((option) => option.value);
         setSelectedValues(allValues);
         onValueChange(allValues);
-      }
-    };
-    const [hourFrom, setHourFrom] = React.useState<string>('');
-    const [hourTo, setHourTo] = React.useState<string>('');
-    const [error, setError] = React.useState<string>('');
-    const [dateFrom, setDateFrom] = React.useState<Date | undefined>(undefined);
-    const [dateTo, setDateTo] = React.useState<Date | undefined>(undefined);
-  
-    React.useEffect(() => {
-      if (dateFrom) {
-        const hours = dateFrom.getHours();
-        const minutes = dateFrom.getMinutes();
-        setHourFrom(`${hours}:${minutes < 10 ? '0' + minutes : minutes}`);
-      }
-      if (dateTo) {
-        const hours = dateTo.getHours();
-        const minutes = dateTo.getMinutes();
-        setHourTo(`${hours}:${minutes < 10 ? '0' + minutes : minutes}`);
-      }
-    }, [dateFrom, dateTo]);
-  
-    const onAddHours = () => {
-      if (!hourFrom || !hourTo) {
-        setError('Please select from and to time');
-      } else if (hourFrom.slice(0, 2) >= hourTo.slice(0, 2) && hourFrom.slice(3) >= hourTo.slice(3)) {
-        setError('Invalid date');
-      } else {
-        setError(''); // Or any other handling for valid time range
-        hoursList.push({ value: `${hourFrom} - ${hourTo}`, label: `${hourFrom} - ${hourTo}` });
       }
     };
 
@@ -272,185 +267,89 @@ export const MultiSelect = React.forwardRef<
           align="start"
           onEscapeKeyDown={() => setIsPopoverOpen(false)}
         >
-          {editAble &&
-            <Command>
-              <div className="flex flex-col gap-2">
-                <div className="flex flex-row gap-3 justify-center items-center align-center">
-                  <span>from</span>
-                  <TimePicker date={dateFrom} setDate={setDateFrom} />
-                </div>
-                <div className="flex flex-row gap-3 justify-center items-center  align-center">
-                  <span>to&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                  <TimePicker date={dateTo} setDate={setDateTo} />
-                </div>
-                  <Button variant={"outline"} className={'w-full'} onClick={onAddHours}><Plus /></Button>
-                  {error && <span className="text-red-500">{error}</span>}
-              </div>
+          <Command>
+            <CommandInput
+              placeholder="Search..."
+              onKeyDown={handleInputKeyDown}
+            />
+            <CommandList>
+              <CommandEmpty>No results found.</CommandEmpty>
+              <CommandGroup>
+                <CommandItem
+                  key="all"
+                  onSelect={toggleAll}
+                  style={{ pointerEvents: "auto", opacity: 1 }}
+                  className="cursor-pointer"
+                >
+                  <div
+                    className={cn(
+                      "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                      selectedValues.length === options.length
+                        ? "bg-primary text-primary-foreground"
+                        : "opacity-50 [&_svg]:invisible"
+                    )}
+                  >
+                    <CheckIcon className="h-4 w-4" />
+                  </div>
+                  <span>(Select All)</span>
+                </CommandItem>
+                {options.map((option) => {
+                  const isSelected = selectedValues.includes(option.value);
+                  return (
+                    <CommandItem
+                      key={option.value}
+                      onSelect={() => toggleOption(option.value)}
+                      style={{ pointerEvents: "auto", opacity: 1 }}
+                      className="cursor-pointer"
+                    >
+                      <div
+                        className={cn(
+                          "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                          isSelected
+                            ? "bg-primary text-primary-foreground"
+                            : "opacity-50 [&_svg]:invisible"
+                        )}
+                      >
+                        <CheckIcon className="h-4 w-4" />
+                      </div>
+                      {option.icon && (
+                        <option.icon className="mr-2 h-4 w-4 text-muted-foreground" />
+                      )}
+                      <span>{option.label}</span>
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
               <CommandSeparator />
-              <CommandList>
-                <CommandEmpty>No results found.</CommandEmpty>
-                <CommandGroup>
-                  <CommandItem
-                    key="all"
-                    onSelect={toggleAll}
-                    style={{ pointerEvents: "auto", opacity: 1 }}
-                    className="cursor-pointer"
-                  >
-                    <div
-                      className={cn(
-                        "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
-                        selectedValues.length === options.length
-                          ? "bg-primary text-primary-foreground"
-                          : "opacity-50 [&_svg]:invisible"
-                      )}
-                    >
-                      <CheckIcon className="h-4 w-4" />
-                    </div>
-                    <span>(Select All)</span>
-                  </CommandItem>
-                  {options.map((option) => {
-                    const isSelected = selectedValues.includes(option.value);
-                    return (
+              <CommandGroup>
+                <div className="flex items-center justify-between">
+                  {selectedValues.length > 0 && (
+                    <>
                       <CommandItem
-                        key={option.value}
-                        onSelect={() => toggleOption(option.value)}
+                        onSelect={handleClear}
                         style={{ pointerEvents: "auto", opacity: 1 }}
-                        className="cursor-pointer"
+                        className="flex-1 justify-center cursor-pointer"
                       >
-                        <div
-                          className={cn(
-                            "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
-                            isSelected
-                              ? "bg-primary text-primary-foreground"
-                              : "opacity-50 [&_svg]:invisible"
-                          )}
-                        >
-                          <CheckIcon className="h-4 w-4" />
-                        </div>
-                        {option.icon && (
-                          <option.icon className="mr-2 h-4 w-4 text-muted-foreground" />
-                        )}
-                        <span>{option.label}</span>
+                        Clear
                       </CommandItem>
-                    );
-                  })}
-                </CommandGroup>
-                <CommandSeparator />
-                <CommandGroup>
-                  <div className="flex items-center justify-between">
-                    {selectedValues.length > 0 && (
-                      <>
-                        <CommandItem
-                          onSelect={handleClear}
-                          style={{ pointerEvents: "auto", opacity: 1 }}
-                          className="flex-1 justify-center cursor-pointer"
-                        >
-                          Clear
-                        </CommandItem>
-                        <Separator
-                          orientation="vertical"
-                          className="flex min-h-6 h-full"
-                        />
-                      </>
-                    )}
-                    <CommandSeparator />
-                    <CommandItem
-                      onSelect={() => setIsPopoverOpen(false)}
-                      style={{ pointerEvents: "auto", opacity: 1 }}
-                      className="flex-1 justify-center cursor-pointer"
-                    >
-                      Close
-                    </CommandItem>
-                  </div>
-                </CommandGroup>
-              </CommandList>
-            </Command>         
-          }
-          {!editAble &&
-            <Command>
-              <CommandInput
-                placeholder="Search..."
-                onKeyDown={handleInputKeyDown}
-              />
-              <CommandList>
-                <CommandEmpty>No results found.</CommandEmpty>
-                <CommandGroup>
+                      <Separator
+                        orientation="vertical"
+                        className="flex min-h-6 h-full"
+                      />
+                    </>
+                  )}
+                  <CommandSeparator />
                   <CommandItem
-                    key="all"
-                    onSelect={toggleAll}
+                    onSelect={() => setIsPopoverOpen(false)}
                     style={{ pointerEvents: "auto", opacity: 1 }}
-                    className="cursor-pointer"
+                    className="flex-1 justify-center cursor-pointer"
                   >
-                    <div
-                      className={cn(
-                        "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
-                        selectedValues.length === options.length
-                          ? "bg-primary text-primary-foreground"
-                          : "opacity-50 [&_svg]:invisible"
-                      )}
-                    >
-                      <CheckIcon className="h-4 w-4" />
-                    </div>
-                    <span>(Select All)</span>
+                    Close
                   </CommandItem>
-                  {options.map((option) => {
-                    const isSelected = selectedValues.includes(option.value);
-                    return (
-                      <CommandItem
-                        key={option.value}
-                        onSelect={() => toggleOption(option.value)}
-                        style={{ pointerEvents: "auto", opacity: 1 }}
-                        className="cursor-pointer"
-                      >
-                        <div
-                          className={cn(
-                            "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
-                            isSelected
-                              ? "bg-primary text-primary-foreground"
-                              : "opacity-50 [&_svg]:invisible"
-                          )}
-                        >
-                          <CheckIcon className="h-4 w-4" />
-                        </div>
-                        {option.icon && (
-                          <option.icon className="mr-2 h-4 w-4 text-muted-foreground" />
-                        )}
-                        <span>{option.label}</span>
-                      </CommandItem>
-                    );
-                  })}
-                </CommandGroup>
-                <CommandSeparator />
-                <CommandGroup>
-                  <div className="flex items-center justify-between">
-                    {selectedValues.length > 0 && (
-                      <>
-                        <CommandItem
-                          onSelect={handleClear}
-                          style={{ pointerEvents: "auto", opacity: 1 }}
-                          className="flex-1 justify-center cursor-pointer"
-                        >
-                          Clear
-                        </CommandItem>
-                        <Separator
-                          orientation="vertical"
-                          className="flex min-h-6 h-full"
-                        />
-                      </>
-                    )}
-                    <CommandSeparator />
-                    <CommandItem
-                      onSelect={() => setIsPopoverOpen(false)}
-                      style={{ pointerEvents: "auto", opacity: 1 }}
-                      className="flex-1 justify-center cursor-pointer"
-                    >
-                      Close
-                    </CommandItem>
-                  </div>
-                </CommandGroup>
-              </CommandList>
-            </Command>         
-          }
+                </div>
+              </CommandGroup>
+            </CommandList>
+          </Command>
         </PopoverContent>
         {/* {animation > 0 && selectedValues.length > 0 && (
           <WandSparkles
@@ -467,4 +366,3 @@ export const MultiSelect = React.forwardRef<
 );
 
 MultiSelect.displayName = "MultiSelect";
-

@@ -1,6 +1,6 @@
 import { logout } from "@/actions/auth/auth.action";
 import { Button } from "@/components/ui/button";
-import { useGetUser } from "@/hooks/useGetUser";
+import { useGetUser } from "@/hooks/userHooks";
 import { validateRequest } from "@/lib/auth";
 import Link from "next/link";
 
