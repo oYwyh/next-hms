@@ -4,61 +4,86 @@ import { ColumnDef } from "@tanstack/react-table"
 import { ArrowUpDown, MoreHorizontal } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { DataTableColumnHeader } from "@/components/ui/custom/DataTableColumnHeader"
-import { Form, useForm } from "react-hook-form"
-import FormField from "./FormField"
-import { TaddSchema, addSchema } from "@/app/(dashboard)/types"
-import { zodResolver } from "@hookform/resolvers/zod"
-import Add from "@/app/(dashboard)/admin/manage/_components/add"
 import Edit from "@/app/(dashboard)/admin/manage/_components/edit"
+import Delete from "@/app/(dashboard)/admin/manage/_components/delete"
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import * as XLSX from 'xlsx'
+import { Dialog, DialogContent, DialogTrigger, DialogFooter, DialogHeader, DialogTitle } from "../dialog"
+import { Label } from "@radix-ui/react-label"
+import { Input } from "../input"
+import { ChangeEvent, useState } from "react"
+import { useForm } from "react-hook-form"
+import { Form } from "../form"
+import FormField from "./FormField"
+import SwitchInput from "./SwitchInput"
 
-// This type is used to define the shape of our data.
-// You can use a Zod schema here if you want.
-export type DoctorColumnsType = {
-  username: string
-  email: string
-  phone: string
-  age: string
+export type BaseColumnsTypes = {
+  id: string | number;
+  firstname: string;
+  lastname: string;
+  username: string;
+  email: string;
+  phone: string;
+  nationalId: string;
+  age: string;
+  gender: string;
+  role: string;
 }
 
-const doctor = true
+export type UserColumnsTypes = BaseColumnsTypes;
 
-const doctorColumns = ['id', 'firstname', 'lastname', 'username', 'email', 'phone', 'nationalId', 'age', 'gender', 'specialty']
+export type AdminColmnsTypes = BaseColumnsTypes & {
+  super: boolean
+};
+
+export type DoctorColumnsTypes = BaseColumnsTypes & {
+  specialty: string | null; // Allow null values for specialty
+  workTime: { workHour: any; day: string }[];
+}
+
+const baseColumns = ['id', 'firstname', 'lastname', 'username', 'email', 'phone', 'nationalId', 'age', 'gender', 'role']
+const userColumns = baseColumns;
+const adminColumns = baseColumns;
+const doctorColumns = baseColumns.concat('specialty');
 
 
 
-export const columns: ColumnDef<DoctorColumnsType>[] = [
+const selectTableColumn: ColumnDef<unknown>[] = [
   {
     id: "select",
     header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
+
+      // console.log(table.getIsAllRowsSelected()),
+      // console.log(table.getIsSomeRowsSelected()),
+      <>
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+
+      </>
     ),
     cell: ({ row }) => (
       <Checkbox
@@ -70,6 +95,179 @@ export const columns: ColumnDef<DoctorColumnsType>[] = [
     enableSorting: false,
     enableHiding: false,
   },
+]
+
+const exportTableColumn: ColumnDef<unknown>[] = [
+  {
+    id: "export",
+    header: ({ table }) => {
+
+      const onExport = (data: any, title: string) => {
+        // Create Excel workbook and worksheet
+        const workbook = XLSX.utils.book_new();
+        const worksheet = XLSX.utils?.json_to_sheet(data);
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'test');
+        // Save the workbook as an Excel file
+        XLSX.writeFile(workbook, `${title}.xlsx`);
+      }
+
+      let fileName = '';
+      const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+        fileName = e.target.value;
+      };
+
+      const handleExportClick = () => {
+        const selectedRows = table.getSelectedRowModel().rows.map(row => row.original);
+        onExport(selectedRows, fileName);
+      };
+
+      return (
+        <>
+          {table.getIsSomeRowsSelected() == true && (
+            <>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline">Export</Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>File Name</DialogTitle>
+                  </DialogHeader>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="name" className="text-right">
+                      Name
+                    </Label>
+                    <Input
+                      onChange={handleInputChange}
+                      id="name"
+                      placeholder="File name"
+                      className="col-span-3"
+                    />
+                  </div>
+                  {/* <Button onClick={() => onExport(table.getSelectedRowModel().rows.map(row => row.original))}>Export</Button> */}
+
+                  <DialogFooter>
+                    <Button onClick={handleExportClick} type="submit">Export</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </>
+
+          )}
+          {table.getIsAllRowsSelected() == true && (
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline">Export</Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>File Name</DialogTitle>
+                </DialogHeader>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="name" className="text-right">
+                    Name
+                  </Label>
+                  <Input
+                    onChange={handleInputChange}
+                    id="name"
+                    placeholder="File name"
+                    className="col-span-3"
+                  />
+                </div>
+                {/* <Button onClick={() => onExport(table.getSelectedRowModel().rows.map(row => row.original))}>Export</Button> */}
+
+                <DialogFooter>
+                  <Button onClick={handleExportClick} type="submit">Export</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+        </>
+      )
+    },
+  },
+]
+
+const actionsTableColumn: ColumnDef<unknown>[] = [
+  {
+    id: "actions",
+    accessorKey: "actions",
+    header: ({ column, table }) => {
+      return (
+        <p>Actions</p>
+      )
+    },
+    cell: ({ row }) => {
+      let rowData = {};
+      if (row.getValue('role') == 'doctor') {
+        rowData = doctorColumns.reduce((acc, column: string) => {
+          acc[column] = row.getValue(column);
+          return acc;
+        }, {});
+      } else {
+        rowData = baseColumns.reduce((acc, column: string) => {
+          acc[column] = row.getValue(column);
+          return acc;
+        }, {});
+      }
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <Edit role={row.getValue('role')} userId={row.getValue('id')} userData={rowData} workTime={row.getValue('workTime')} />
+            <AlertDialog>
+              <AlertDialogTrigger asChild><Button variant={'destructive'}>Delete</Button></AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete your account
+                    and remove your data from our servers.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <Delete id={row.getValue('id')} />
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </DropdownMenuContent>
+        </DropdownMenu >
+      )
+    },
+  },
+]
+
+const SwitchTableColumn: ColumnDef<unknown>[] = [
+  {
+    id: "super",
+    accessorKey: 'super',
+    header: ({ column }) => {
+      return (
+        <DataTableColumnHeader column={column} title='Super' />
+      )
+    },
+    cell: ({ row }) => {
+      return (
+        <SwitchInput id={row.getValue('id')} value={row.getValue('super')} />
+      )
+    }
+  }
+]
+
+const WithPrivileges: ColumnDef<unknown>[] = [
+  ...actionsTableColumn,
+  ...exportTableColumn,
+]
+
+export const DoctorTableColumns: ColumnDef<DoctorColumnsTypes>[] = [
+  ...selectTableColumn,
   ...doctorColumns.map((column: string) => ({
     accessorKey: column,
     header: ({ column }) => {
@@ -78,9 +276,6 @@ export const columns: ColumnDef<DoctorColumnsType>[] = [
       )
     },
   })),
-  // {
-  //   accessorKey: 'workDay'
-  // },
   {
     accessorKey: 'workTime',
     header: ({ column }) => {
@@ -141,33 +336,42 @@ export const columns: ColumnDef<DoctorColumnsType>[] = [
       )
     },
   },
-  {
-    id: "actions",
+];
+
+export const UserTableColumns: ColumnDef<UserColumnsTypes>[] = [
+  ...selectTableColumn,
+  ...userColumns.map((column: string) => ({
+    accessorKey: column,
     header: ({ column }) => {
       return (
-        <p>Actions</p>
+        <DataTableColumnHeader column={column} title={column.name || column.id} />
       )
     },
-    cell: ({ row }) => {
-      const rowData = doctorColumns.reduce((acc, column: string) => {
-        acc[column] = row.getValue(column);
-        acc['workTime'] = row.getValue('workTime');
-        return acc;
-      }, {});
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <Edit operation='edit' userId={row.getValue('id')} userData={rowData} />
-          </DropdownMenuContent>
-        </DropdownMenu >
-      )
-    },
-  },
+  })),
 ];
+
+export const AdminTableColumns: ColumnDef<AdminColmnsTypes>[] = [
+  ...selectTableColumn,
+  ...adminColumns.map((column: string) => ({
+    accessorKey: column,
+    header: ({ column }) => {
+      return (
+        <DataTableColumnHeader column={column} title={column.name || column.id} />
+      )
+    },
+  })),
+];
+
+export const DoctorTableColumnsWithPrivileges: ColumnDef<DoctorColumnsTypes>[] = [
+  ...DoctorTableColumns,
+  ...WithPrivileges,
+]
+export const UserTableColumnsWithPrivileges: ColumnDef<UserColumnsTypes>[] = [
+  ...UserTableColumns,
+  ...WithPrivileges,
+]
+export const AdminTableColumnsWithPrivileges: ColumnDef<AdminColmnsTypes>[] = [
+  ...AdminTableColumns,
+  ...SwitchTableColumn,
+  ...WithPrivileges,
+]

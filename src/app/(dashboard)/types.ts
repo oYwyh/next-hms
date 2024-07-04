@@ -47,9 +47,40 @@ export type TupdateWorkSchema = z.infer<typeof updateWorkSchema>;
 
 
 
-export const addSchema = baseSchema.refine((data: { password: string, confirmPassword: string }) => data.password === data.confirmPassword, {
+export const editSchema = baseSchema.extend({
+    specialty: z.string().optional(),
+}).refine((data: { password: string, confirmPassword: string }) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
     path: ['confirmPassword'],
-});
+}).superRefine((data, ctx) => {
+    if (data.role == 'doctor') {
+        if (!data.specialty) {
+            ctx.addIssue({
+                code: "custom",
+                message: "Specialty is required",
+                path: ["specialty"],
+            })
+        }
+    }
+})
+
+export type TeditSchema = z.infer<typeof editSchema>;
+
+export const addSchema = baseSchema.extend({
+    specialty: z.string().optional(),
+}).refine((data: { password: string, confirmPassword: string }) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+}).superRefine((data, ctx) => {
+    if (data.role == 'doctor') {
+        if (!data.specialty) {
+            ctx.addIssue({
+                code: "custom",
+                message: "Specialty is required",
+                path: ["specialty"],
+            })
+        }
+    }
+})
 
 export type TaddSchema = z.infer<typeof addSchema>;

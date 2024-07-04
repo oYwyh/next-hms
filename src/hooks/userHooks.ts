@@ -13,7 +13,7 @@ export const useGetUser = async () => {
       },
       where: (userTable, { eq }) => eq(userTable.id, user.id),
       with: {
-        admin: true,
+        admin: true
       },
     });
     return admin;

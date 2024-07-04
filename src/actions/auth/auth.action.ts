@@ -2,7 +2,7 @@
 
 import db from "@/lib/db";
 import { lucia, validateRequest } from "@/lib/auth";
-import { userTable } from "@/lib/db/schema";
+import { adminTable, userTable } from "@/lib/db/schema";
 import { TcheckSchema, TsignInSchema, TsignUpSchema } from "@/app/auth/types";
 import { TbaseSchema, columnsRegex } from "@/lib/types";
 import { uniqueColumnsValidations } from "@/lib/funcs";
@@ -10,13 +10,14 @@ import { hash, verify } from "@node-rs/argon2";
 import { generateIdFromEntropySize } from "lucia";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { sql } from "drizzle-orm";
 
 export async function signup(
   data: TbaseSchema,
 ) {
   const { username, firstname, lastname, phone, nationalId, age, gender, password, email } = data;
 
-  const result = await uniqueColumnsValidations(username, email, phone, nationalId)
+  const result = await uniqueColumnsValidations(data)
 
   if (result?.error) return { error: result?.error };
 
@@ -29,7 +30,7 @@ export async function signup(
 
   const userId = generateIdFromEntropySize(10);
 
-  await db.insert(userTable).values({
+  const user = await db.insert(userTable).values({
     id: userId,
     firstname,
     lastname,
@@ -40,8 +41,15 @@ export async function signup(
     age,
     gender,
     password: passwordHash,
-    role: 'user',
-  });
+    role: 'admin',
+  }).returning();
+
+  if (user[0]?.role == 'admin') {
+    await db.insert(adminTable).values({
+      user_id: userId,
+      super: true,
+    })
+  }
 
   const session = await lucia.createSession(userId, {});
   const sessionCookie = lucia.createSessionCookie(session.id);

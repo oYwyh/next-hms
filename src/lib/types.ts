@@ -44,6 +44,12 @@ export const baseSchema = z.object({
 
 export type TbaseSchema = z.infer<typeof baseSchema>;
 
+export const doctorSchema = baseSchema.extend({
+  specialty: z.string().min(1, "Specialty is required"),
+})
+
+export type TdoctorSchema = z.infer<typeof doctorSchema>;
+
 
 export type User = {
   id: string;

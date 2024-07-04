@@ -1,6 +1,6 @@
 'use client'
 
-import { TbaseSchema, daysList } from "@/lib/types";
+import { daysList } from "@/lib/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Form, FormMessage } from "@/components/ui/form";
@@ -15,33 +15,27 @@ import {
   DialogFooter,
   DialogHeader,
 } from "@/components/ui/dialog";
-import { TaddSchema, addSchema } from "@/app/(dashboard)/types";
-import { TsignUpSchema } from "@/app/auth/types";
-import { MultiSelect } from "@/components/ui/multi-select";
-import { Badge } from "@/components/ui/badge";
-import Hours from "@/components/ui/custom/Hours";
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+import { TeditSchema, editSchema } from "@/app/(dashboard)/types";
 
-import { add, edit } from "@/app/(dashboard)/_actions/operations.action";
+import { edit } from "@/app/(dashboard)/_actions/operations.action";
+import ManageForm from "./ManageForm";
 
-type HourTypes = { day: string; value: string };
+type THours = { day: string; value: string };
+
+type TEdit = {
+  role: 'admin' | 'doctor' | 'user'
+  userId: string
+  userData: TeditSchema
+  workTime: any
+}
 
 
-
-export default function Edit({ operation, userId, userData }: { operation: "add" | "edit", userId: string, userData: TbaseSchema }) {
+export default function Edit({ role, userId, userData, workTime }: TEdit) {
   const [open, setOpen] = useState(false);
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
-  const [selectedHours, setSelectedHours] = useState<HourTypes[]>([]);
+  const [selectedHours, setSelectedHours] = useState<THours[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const hoursList: HourTypes[] = [];
-
+  const hoursList: THours[] = [];
 
   const formatTime = (time: string) => {
     const [hour, minute] = time.split(':');
@@ -49,64 +43,105 @@ export default function Edit({ operation, userId, userData }: { operation: "add"
   };
 
   useEffect(() => {
-    if (userData?.workTime) {
-      const days = userData.workTime.map((entry: { day: string }) => entry.day);
-      const uniqueDays = Array.from(new Set(days));
+    if (workTime) {
+      const days = workTime.map((entry: { day: string }) => entry.day);
+      const uniqueDays: string[] = Array.from(new Set(days));
       setSelectedDays(uniqueDays);
 
-      const hours = userData.workTime.map((entry: { day: string, workHour: { startAt: string, endAt: string } }) => ({
+      const hours = workTime.map((entry: { day: string, workHour: { startAt: string, endAt: string } }) => ({
         day: entry.day,
         value: `${formatTime(entry.workHour.startAt)} - ${formatTime(entry.workHour.endAt)}`
       }));
       setSelectedHours(hours);
     }
+
   }, [userData]);
 
-
-  const form = useForm<TaddSchema>({
-    resolver: zodResolver(addSchema),
+  const form = useForm<TeditSchema>({
+    resolver: zodResolver(editSchema),
     defaultValues: {
       username: userData?.username || "",
       firstname: userData?.firstname || "",
       lastname: userData?.lastname || "",
+      email: userData?.email || "",
       phone: userData?.phone || "",
       nationalId: userData?.nationalId || "",
       age: userData?.age || "",
       gender: userData?.gender || "",
-      email: userData?.email || "",
-      password: "",
+      specialty: userData?.specialty || ""
     }
   });
 
-  const onSubmit = async (data: TaddSchema) => {
-    if (!selectedDays?.length || !selectedHours?.length) {
-      setError("Please select days and hours");
+  const onSubmit = async (data: TeditSchema) => {
+
+    // Compare form data with userData and log any matching fields
+    const userFields = Object.keys(userData).filter(key => key !== 'workTime' && key !== 'id' && key !== 'role');
+    const fieldsNotToCompare: string[] = [];
+    const fieldsToCompare: string[] = [];
+
+    userFields.forEach((field) => {
+      if (data[field]?.toLowerCase() !== userData[field]?.toLowerCase()) {
+        fieldsToCompare.push(field);
+      } else {
+        fieldsNotToCompare.push(field);
+      }
+    });
+
+    for (const field of fieldsNotToCompare) (
+      delete data[field]
+    )
+
+    Object.entries(data).forEach(([key, value]) => {
+      if (typeof value === 'string') {
+        data[key] = value.toLowerCase();
+      }
+    });
+
+    if (role == 'doctor') {
+      if (!selectedDays?.length || !selectedHours?.length) {
+        setError("Please select days and hours");
+        return;
+      }
+
+      // Check if each selected day has at least one hour range
+      const daysWithHours = new Set(selectedHours.map(hour => hour.day));
+      const allDaysHaveHours = selectedDays.every(day => daysWithHours.has(day));
+
+      if (!allDaysHaveHours) {
+        setError("Each selected day must have at least one time range.");
+        return;
+      }
+
+      setError(null); // Clear previous error if any
+
+      // Compare selectedDays and selectedHours with userData
+      const originalDays = Array.from(new Set(workTime.map((entry: { day: string }) => entry.day)));
+      const originalHours = workTime.map((entry: { day: string, workHour: { startAt: string, endAt: string } }) => ({
+        day: entry.day,
+        value: `${formatTime(entry.workHour.startAt)} - ${formatTime(entry.workHour.endAt)}`,
+      }));
+
+      const daysChanged = !(selectedDays.length === originalDays.length && selectedDays.every((day) => originalDays.includes(day)));
+      const hoursChanged = !(selectedHours.length === originalHours.length && selectedHours.every((hour) => {
+        return originalHours.some(originalHour => originalHour.day === hour.day && originalHour.value === hour.value);
+      }));
+
+      if (fieldsToCompare.length === 0 && !daysChanged && !hoursChanged) {
+        setError("No changes detected");
+        return;
+      }
+    }
+    if (fieldsToCompare.length === 0) {
+      setError("No changes detected");
       return;
     }
 
-    // Check if each selected day has at least one hour range
-    const daysWithHours = new Set(selectedHours.map(hour => hour.day));
-    const allDaysHaveHours = selectedDays.every(day => daysWithHours.has(day));
-
-    if (!allDaysHaveHours) {
-      setError("Each selected day must have at least one time range.");
-      return;
+    let result;
+    result = await edit(data, role, userId, 'edit', selectedDays, selectedHours, fieldsToCompare);
+    if (role == 'doctor') {
+    } else {
+      result = await edit(data, role, userId, 'edit');
     }
-
-    setError(null); // Clear previous error if any
-
-    // // Compare form data with userData and log any matching fields
-    // for (const [field, value] of Object.entries(data)) {
-    //   if (userData && field in userData && userData[field as keyof typeof userData] === value) {
-    //     form.setError(field as keyof TaddSchema, {
-    //       type: "server",
-    //       message: `${field} has the same value in both the form data and the userData.`,
-    //     });
-    //     return;
-    //   }
-    // }
-
-    const result = await edit(data, selectedDays, selectedHours, "doctor", userId, operation);
 
     if (result?.done) {
       form.reset();
@@ -115,91 +150,30 @@ export default function Edit({ operation, userId, userData }: { operation: "add"
       setOpen(false);
     } else if (result?.error) {
       for (const [field, message] of Object.entries(result.error)) {
-        form.setError(field as keyof TaddSchema, {
+        form.setError(field as keyof TeditSchema, {
           type: "server",
-          message: message,
+          message: message
         });
       }
     }
   };
   return (
     <div>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button variant="outline" className='capitalize'>{operation} Doctor</Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle className='capitalize'>{operation} Doctor</DialogTitle>
-            <DialogDescription>
-              Anyone who has this link will be able to view this.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)}>
-                <div className="flex flex-row gap-10">
-                  <FormField form={form} name="firstname" />
-                  <FormField form={form} name="lastname" />
-                </div>
-                <div className="flex flex-row gap-10">
-                  <FormField form={form} name="username" />
-                  <FormField form={form} name="email" />
-                </div>
-                <div className="flex flex-row gap-10">
-                  <FormField form={form} name="phone" />
-                  <FormField form={form} name="nationalId" />
-                </div>
-                <div className="flex flex-row gap-10">
-                  <FormField form={form} name="age" />
-                  <FormField form={form} name="gender" />
-                </div>
-                <div className="flex flex-row gap-10">
-                  <FormField form={form} name="password" />
-                  <FormField form={form} name="confirmPassword" />
-                </div>
-                <div className="pt-4">
-                  <MultiSelect
-                    options={daysList}
-                    onValueChange={setSelectedDays}
-                    defaultValue={selectedDays}
-                    selectedHours={selectedHours}
-                    setSelectedHours={setSelectedHours}
-                    placeholder="Select Days"
-                    variant="inverted"
-                    animation={2}
-                    maxCount={3}
-                    clearAble={false}
-                  />
-                </div>
-                <div className="pt-4 flex flex-row gap-2 flex-wrap">
-                  {selectedDays &&
-                    selectedDays.map((day) => {
-                      return (
-                        <Popover key={day}>
-                          <PopoverTrigger><Badge className="cursor-pointer">{day}</Badge></PopoverTrigger>
-                          <PopoverContent>
-                            <Hours
-                              selectedHours={selectedHours}
-                              setSelectedHours={setSelectedHours}
-                              day={day}
-                              hoursList={hoursList}
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      )
-                    })
-                  }
-                </div>
-                {error && <FormMessage>{error}</FormMessage>}
-                <DialogFooter className="pt-4">
-                  <Button type="submit">Save changes</Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ManageForm
+        open={open}
+        setOpen={setOpen}
+        role={role}
+        form={form}
+        onSubmit={onSubmit}
+        daysList={daysList}
+        selectedDays={selectedDays}
+        setSelectedDays={setSelectedDays}
+        selectedHours={selectedHours}
+        setSelectedHours={setSelectedHours}
+        hoursList={hoursList}
+        error={error}
+        operation={'edit'}
+      />
     </div>
   );
 }

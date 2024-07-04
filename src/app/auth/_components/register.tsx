@@ -18,7 +18,15 @@ export default function Register({ insertedCredit }: { insertedCredit: InsertedC
 
 
   const onRegister = async (data: TsignUpSchema) => {
+
+    Object.entries(data).forEach(([key, value]) => {
+      if (typeof value === 'string') {
+        data[key] = value.toLowerCase();
+      }
+    });
+
     const result = await signup(data);
+
     if (result?.error) {
       // Assuming result.error is an object with field-specific errors
       for (const [field, message] of Object.entries(result.error)) {

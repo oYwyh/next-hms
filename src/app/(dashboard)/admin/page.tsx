@@ -15,6 +15,12 @@ export default async function AdminPage() {
           <Button>
             <Link href="/admin/profile">Admin Profile</Link>
           </Button>
+          <Button>
+            <Link href="/admin/manage/doctors">Manage Doctors</Link>
+          </Button>
+          <Button>
+            <Link href="/admin/manage/users">Manage Users</Link>
+          </Button>
           <form action={logout}>
             <Button>Sign out</Button>
           </form>

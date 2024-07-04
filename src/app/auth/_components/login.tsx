@@ -10,12 +10,19 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import FormField from "@/components/ui/custom/FormField";
 
-export default function Login({ insertedCredit }:{ insertedCredit: InsertedCredit }) {
+export default function Login({ insertedCredit }: { insertedCredit: InsertedCredit }) {
   const form = useForm<TsignInSchema>({
     resolver: zodResolver(signInSchema),
   });
 
   const onLogin = async (data: TsignInSchema) => {
+
+    Object.entries(data).forEach(([key, value]) => {
+      if (typeof value === 'string') {
+        data[key] = value.toLowerCase();
+      }
+    });
+
     const result = await signin(data);
 
     if (result?.error) {

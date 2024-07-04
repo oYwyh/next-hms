@@ -34,15 +34,15 @@ export default function FormUpdateProfile({
   });
 
   const onSubmit = async (data: TupdateProfileSchema) => {
-    if(data.username === username && data.email === email) {
+    if (data.username === username && data.email === email) {
       setError("Nothing to update")
-    }else {
+    } else {
       setError('')
       const result = await updateProfile(data);
 
-      if(result?.exists) {
+      if (result?.exists) {
         setError(result?.exists)
-      }else {
+      } else {
         toast.success('Profile Updated')
       }
     }

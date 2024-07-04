@@ -47,6 +47,7 @@ export function DataTable<TData, TValue>({
       lastname: false,
       nationalId: false,
       gender: false,
+      role: false
     })
   const [rowSelection, setRowSelection] = React.useState({})
 
