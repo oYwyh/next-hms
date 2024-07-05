@@ -34,6 +34,7 @@ import { useForm } from "react-hook-form"
 import { Form } from "../form"
 import FormField from "./FormField"
 import SwitchInput from "./SwitchInput"
+import Actions from "@/app/(dashboard)/admin/manage/_components/actions"
 
 export type BaseColumnsTypes = {
   id: string | number;
@@ -66,13 +67,11 @@ const doctorColumns = baseColumns.concat('specialty');
 
 
 
-const selectTableColumn: ColumnDef<unknown>[] = [
+const selectTableColumn = [
   {
     id: "select",
-    header: ({ table }) => (
-
-      // console.log(table.getIsAllRowsSelected()),
-      // console.log(table.getIsSomeRowsSelected()),
+    accessorKey: "select",
+    header: ({ table }: { table: any }) => (
       <>
         <Checkbox
           checked={
@@ -85,7 +84,7 @@ const selectTableColumn: ColumnDef<unknown>[] = [
 
       </>
     ),
-    cell: ({ row }) => (
+    cell: ({ row }: { row: any }) => (
       <Checkbox
         checked={row.getIsSelected()}
         onCheckedChange={(value) => row.toggleSelected(!!value)}
@@ -97,64 +96,33 @@ const selectTableColumn: ColumnDef<unknown>[] = [
   },
 ]
 
-const exportTableColumn: ColumnDef<unknown>[] = [
-  {
-    id: "export",
-    header: ({ table }) => {
+const exportTableColumn = [{
+  id: "export",
+  accessorKey: "export",
+  header: ({ table }: { table: any }) => {
+    const onExport = (data: any, title: string) => {
+      // Create Excel workbook and worksheet
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils?.json_to_sheet(data);
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'test');
+      // Save the workbook as an Excel file
+      XLSX.writeFile(workbook, `${title}.xlsx`);
+    }
 
-      const onExport = (data: any, title: string) => {
-        // Create Excel workbook and worksheet
-        const workbook = XLSX.utils.book_new();
-        const worksheet = XLSX.utils?.json_to_sheet(data);
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'test');
-        // Save the workbook as an Excel file
-        XLSX.writeFile(workbook, `${title}.xlsx`);
-      }
+    let fileName = '';
+    const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+      fileName = e.target.value;
+    };
 
-      let fileName = '';
-      const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-        fileName = e.target.value;
-      };
+    const handleExportClick = () => {
+      const selectedRows = table.getSelectedRowModel().rows.map((row: any) => row.original);
+      onExport(selectedRows, fileName);
+    };
 
-      const handleExportClick = () => {
-        const selectedRows = table.getSelectedRowModel().rows.map(row => row.original);
-        onExport(selectedRows, fileName);
-      };
-
-      return (
-        <>
-          {table.getIsSomeRowsSelected() == true && (
-            <>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="outline">Export</Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>File Name</DialogTitle>
-                  </DialogHeader>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="name" className="text-right">
-                      Name
-                    </Label>
-                    <Input
-                      onChange={handleInputChange}
-                      id="name"
-                      placeholder="File name"
-                      className="col-span-3"
-                    />
-                  </div>
-                  {/* <Button onClick={() => onExport(table.getSelectedRowModel().rows.map(row => row.original))}>Export</Button> */}
-
-                  <DialogFooter>
-                    <Button onClick={handleExportClick} type="submit">Export</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </>
-
-          )}
-          {table.getIsAllRowsSelected() == true && (
+    return (
+      <>
+        {table.getIsSomeRowsSelected() == true && (
+          <>
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="outline">Export</Button>
@@ -174,86 +142,87 @@ const exportTableColumn: ColumnDef<unknown>[] = [
                     className="col-span-3"
                   />
                 </div>
-                {/* <Button onClick={() => onExport(table.getSelectedRowModel().rows.map(row => row.original))}>Export</Button> */}
-
                 <DialogFooter>
                   <Button onClick={handleExportClick} type="submit">Export</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
-          )}
-        </>
-      )
-    },
-  },
-]
+          </>
 
-const actionsTableColumn: ColumnDef<unknown>[] = [
+        )}
+        {table.getIsAllRowsSelected() == true && (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline">Export</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>File Name</DialogTitle>
+              </DialogHeader>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right">
+                  Name
+                </Label>
+                <Input
+                  onChange={handleInputChange}
+                  id="name"
+                  placeholder="File name"
+                  className="col-span-3"
+                />
+              </div>
+              {/* <Button onClick={() => onExport(table.getSelectedRowModel().rows.map(row => row.original))}>Export</Button> */}
+
+              <DialogFooter>
+                <Button onClick={handleExportClick} type="submit">Export</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+      </>
+    )
+  },
+}]
+
+const actionsTableColumn = [
   {
     id: "actions",
     accessorKey: "actions",
-    header: ({ column, table }) => {
+    header: () => {
       return (
         <p>Actions</p>
       )
     },
-    cell: ({ row }) => {
+    cell: ({ row }: { row: any }) => {
       let rowData = {};
       if (row.getValue('role') == 'doctor') {
-        rowData = doctorColumns.reduce((acc, column: string) => {
+        rowData = doctorColumns.reduce((acc: { [key: string]: DoctorColumnsTypes }, column: string) => {
           acc[column] = row.getValue(column);
           return acc;
         }, {});
       } else {
-        rowData = baseColumns.reduce((acc, column: string) => {
+        rowData = baseColumns.reduce((acc: { [key: string]: DoctorColumnsTypes }, column: string) => {
           acc[column] = row.getValue(column);
           return acc;
         }, {});
       }
+
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <Edit role={row.getValue('role')} userId={row.getValue('id')} userData={rowData} workTime={row.getValue('workTime')} />
-            <AlertDialog>
-              <AlertDialogTrigger asChild><Button variant={'destructive'}>Delete</Button></AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete your account
-                    and remove your data from our servers.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <Delete id={row.getValue('id')} />
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </DropdownMenuContent>
-        </DropdownMenu >
+        <Actions row={row} rowData={rowData} />
       )
     },
   },
 ]
 
-const SwitchTableColumn: ColumnDef<unknown>[] = [
+const SwitchTableColumn = [
   {
     id: "super",
     accessorKey: 'super',
-    header: ({ column }) => {
+    header: ({ column }: { column: any }) => {
       return (
         <DataTableColumnHeader column={column} title='Super' />
       )
     },
-    cell: ({ row }) => {
+    cell: ({ row }: { row: any }) => {
       return (
         <SwitchInput id={row.getValue('id')} value={row.getValue('super')} />
       )
@@ -261,7 +230,7 @@ const SwitchTableColumn: ColumnDef<unknown>[] = [
   }
 ]
 
-const WithPrivileges: ColumnDef<unknown>[] = [
+const WithPrivileges = [
   ...actionsTableColumn,
   ...exportTableColumn,
 ]
@@ -269,8 +238,9 @@ const WithPrivileges: ColumnDef<unknown>[] = [
 export const DoctorTableColumns: ColumnDef<DoctorColumnsTypes>[] = [
   ...selectTableColumn,
   ...doctorColumns.map((column: string) => ({
+    id: column,
     accessorKey: column,
-    header: ({ column }) => {
+    header: ({ column }: { column: any }) => {
       return (
         <DataTableColumnHeader column={column} title={column.name || column.id} />
       )
@@ -278,7 +248,7 @@ export const DoctorTableColumns: ColumnDef<DoctorColumnsTypes>[] = [
   })),
   {
     accessorKey: 'workTime',
-    header: ({ column }) => {
+    header: ({ column }: { column: any }) => {
       return (
         <DataTableColumnHeader column={column} title={'Work Time'} />
       )
@@ -342,7 +312,7 @@ export const UserTableColumns: ColumnDef<UserColumnsTypes>[] = [
   ...selectTableColumn,
   ...userColumns.map((column: string) => ({
     accessorKey: column,
-    header: ({ column }) => {
+    header: ({ column }: { column: any }) => {
       return (
         <DataTableColumnHeader column={column} title={column.name || column.id} />
       )
@@ -354,7 +324,7 @@ export const AdminTableColumns: ColumnDef<AdminColmnsTypes>[] = [
   ...selectTableColumn,
   ...adminColumns.map((column: string) => ({
     accessorKey: column,
-    header: ({ column }) => {
+    header: ({ column }: { column: any }) => {
       return (
         <DataTableColumnHeader column={column} title={column.name || column.id} />
       )

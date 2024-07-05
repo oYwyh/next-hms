@@ -9,60 +9,21 @@ export const updateProfileSchema = z.object({
 
 export type TupdateProfileSchema = z.infer<typeof updateProfileSchema>;
 
-export const updatePersonalSchema = z.object({
-    id: z.string().optional(),
-    firstname: z.string().min(1, "Firstname is required"),
-    lastname: z.string().min(1, "Lastname is required"),
-    phone: z.string().min(1, "Phone Number is required"),
-    nationalId: z.string().min(1, "National Id is required"),
-    age: z.string().refine((e) => {
-        const age = parseInt(e);
-        return age >= 18;
-    }, {
-        message: "Age must be greater than or equal to 18",
-    }),
-    gender: z.enum(["male", "female"]),
-})
+export const updatePersonalSchema = baseSchema.omit({ username: true, email: true, password: true, confirmPassword: true });
 
 export type TupdatePersonalSchema = z.infer<typeof updatePersonalSchema>;
 
-export const updatePasswordSchema = z.object({
-    id: z.string().optional(),
-    password: z.string().min(3, "Password must be at least 3"),
-    confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-});
-
-export type TupdatePasswordSchema = z.infer<typeof updatePasswordSchema>;
-
-export const updateWorkSchema = z.object({
-    id: z.string(),
-    doctorId: z.number(),
-    specialty: z.string(),
-})
-
-export type TupdateWorkSchema = z.infer<typeof updateWorkSchema>;
-
-
-
-export const editSchema = baseSchema.extend({
+export const editSchema = baseSchema.omit({ password: true, confirmPassword: true }).extend({
     specialty: z.string().optional(),
-}).refine((data: { password: string, confirmPassword: string }) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ['confirmPassword'],
 }).superRefine((data, ctx) => {
-    if (data.role == 'doctor') {
-        if (!data.specialty) {
-            ctx.addIssue({
-                code: "custom",
-                message: "Specialty is required",
-                path: ["specialty"],
-            })
-        }
+    if (data.role === 'doctor' && !data.specialty) {
+        ctx.addIssue({
+            code: "custom",
+            message: "Specialty is required",
+            path: ["specialty"],
+        });
     }
-})
+});
 
 export type TeditSchema = z.infer<typeof editSchema>;
 
@@ -84,3 +45,23 @@ export const addSchema = baseSchema.extend({
 })
 
 export type TaddSchema = z.infer<typeof addSchema>;
+
+export const passwordSchema = z.object({
+    id: z.string().optional(),
+    password: z.string().min(3, "Password must be at least 3"),
+    confirmPassword: z.string(),
+}).refine((data: { password: string, confirmPassword: string }) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+})
+
+export type TpasswordSchema = z.infer<typeof passwordSchema>;
+
+export const uniqueColumnsSchema = z.object({
+    username: z.string().min(1, "Username is required"),
+    email: z.string().email("Invalid email"),
+    phone: z.string().min(1, "Phone Number is required"),
+    nationalId: z.string().min(1, "National Id is required"),
+}).partial()
+
+export type TuniqueColumnsSchema = z.infer<typeof uniqueColumnsSchema>;

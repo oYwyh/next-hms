@@ -1,23 +1,22 @@
 "use client";
 
-import { TsignUpSchema, signUpSchema } from "@/app/auth/types";
-import { InsertedCredit } from "@/lib/types";
+import { InsertedCredit, TregisterSchema, registerSchema } from "@/app/auth/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { signup } from "@/actions/auth/auth.action";
+import { register } from "@/actions/auth/auth.action";
 import { Form, FormMessage } from "@/components/ui/form";
 import FormField from "@/components/ui/custom/FormField";
 import { useState } from "react";
 
 export default function Register({ insertedCredit }: { insertedCredit: InsertedCredit }) {
-  const form = useForm<TsignUpSchema>({
-    resolver: zodResolver(signUpSchema),
+  const form = useForm<TregisterSchema>({
+    resolver: zodResolver(registerSchema),
   });
 
 
-  const onRegister = async (data: TsignUpSchema) => {
+  const onRegister = async (data: { [key: string]: string | number } & TregisterSchema) => {
 
     Object.entries(data).forEach(([key, value]) => {
       if (typeof value === 'string') {
@@ -25,12 +24,12 @@ export default function Register({ insertedCredit }: { insertedCredit: InsertedC
       }
     });
 
-    const result = await signup(data);
+    const result = await register(data);
 
     if (result?.error) {
       // Assuming result.error is an object with field-specific errors
       for (const [field, message] of Object.entries(result.error)) {
-        form.setError(field as keyof TsignUpSchema, { type: 'server', message: message });
+        form.setError(field as keyof TregisterSchema, { type: 'server', message: message });
       }
     }
   };

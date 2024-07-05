@@ -5,11 +5,20 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
 
-import { addSchema } from "@/app/(dashboard)/types";
+import { addSchema, TaddSchema } from "@/app/(dashboard)/types";
 import { TbaseSchema } from "@/lib/types";
-
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+} from "@/components/ui/dialog";
 import { add } from "@/app/(dashboard)/_actions/operations.action";
 import ManageForm from "./ManageForm";
+import { Button } from "@/components/ui/button";
 
 type HourTypes = { day: string; value: string };
 
@@ -21,13 +30,11 @@ export default function Add({ role }: { role: "admin" | "doctor" | "user" }) {
   const [error, setError] = useState<string | null>(null);
   const hoursList: HourTypes[] = [];
 
-  const form = useForm<TbaseSchema>({
+  const form = useForm<TaddSchema>({
     resolver: zodResolver(addSchema),
   });
 
-
-
-  const onSubmit = async (data: TbaseSchema) => {
+  const onSubmit = async (data: { [key: string]: string } & TaddSchema) => {
     if (role == 'doctor') {
       if (!selectedDays?.length || !selectedHours?.length) {
         setError("Please select days and hours");
@@ -76,21 +83,34 @@ export default function Add({ role }: { role: "admin" | "doctor" | "user" }) {
 
   return (
     <>
-      <ManageForm
-        open={open}
-        setOpen={setOpen}
-        role={role}
-        form={form}
-        onSubmit={onSubmit}
-        daysList={daysList}
-        selectedDays={selectedDays}
-        setSelectedDays={setSelectedDays}
-        selectedHours={selectedHours}
-        setSelectedHours={setSelectedHours}
-        hoursList={hoursList}
-        error={error}
-        operation={'add'}
-      />
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button variant="outline" className='capitalize'>Add {role}</Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className='capitalize'>Add {role}</DialogTitle>
+            <DialogDescription>
+              Anyone who has this link will be able to view this.
+            </DialogDescription>
+          </DialogHeader>
+          <ManageForm
+            open={open}
+            setOpen={setOpen}
+            role={role}
+            form={form}
+            onSubmit={onSubmit}
+            daysList={daysList}
+            selectedDays={selectedDays}
+            setSelectedDays={setSelectedDays}
+            selectedHours={selectedHours}
+            setSelectedHours={setSelectedHours}
+            hoursList={hoursList}
+            error={error}
+            operation={'add'}
+          />
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

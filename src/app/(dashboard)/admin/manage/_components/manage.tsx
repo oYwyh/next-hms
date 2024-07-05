@@ -96,7 +96,7 @@ async function getData(role: string) {
 
 export default async function ManagePage({ role }: { role: 'admin' | 'doctor' | 'user' }) {
   const user = await useGetUser();
-  const isSuper = user.admin.super
+  const isSuper = user && user?.admin.super
   const data = await getData(role)
 
   return (

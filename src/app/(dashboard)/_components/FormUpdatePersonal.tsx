@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { TupdatePersonalSchema, updatePersonalSchema } from "@/app/(dashboard)/types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { updatePersonal, updateProfile } from "../_actions/profile.action";
 import toast from "react-hot-toast";
 
@@ -32,6 +32,15 @@ export default function FormUpdatePersonal({
 
   const [error, setError] = useState<string>()
 
+  const [userData, setUserData] = useState<TupdatePersonalSchema>({
+    firstname,
+    lastname,
+    phone,
+    nationalId,
+    age,
+    gender,
+  })
+
   const form = useForm<TupdatePersonalSchema>({
     resolver: zodResolver(updatePersonalSchema),
     defaultValues: {
@@ -45,25 +54,67 @@ export default function FormUpdatePersonal({
     },
   });
 
-  const onSubmit = async (data: TupdatePersonalSchema) => {
-    if(
-      data.firstname === firstname 
-      && data.lastname === lastname
-      && data.phone === phone
-      && data.nationalId === nationalId
-      && data.age === age
-      && data.gender === gender
-    ) {
-      setError("Nothing to update")
-    }else {
-      setError('')
-      const result = await updatePersonal(data);
+  useEffect(() => {
+    Object.entries(userData).forEach(([key, value]) => {
+      form.setValue(key as keyof TupdatePersonalSchema, value);
+    });
+  }, [userData])
 
-      if(result?.error) {
-        setError(result?.error)
-      }else {
-        toast.success('Personal Data Updated')
+  const onSubmit = async (data: { [key: string]: string } & TupdatePersonalSchema) => {
+    let userFields = Object.keys(userData).filter(key => key !== 'id' && key !== 'role') as (keyof TupdatePersonalSchema)[];
+    let fieldsNotToCompare: string[] = [];
+    let fieldsToCompare: string[] = [];
+
+    userFields.forEach((field) => {
+      if (data[field]?.toLowerCase() !== userData[field]?.toLowerCase()) {
+        fieldsToCompare.push(field);
+      } else {
+        fieldsNotToCompare.push(field);
       }
+    });
+
+    for (const field of fieldsNotToCompare) {
+      delete data[field];
+    }
+
+    Object.entries(data).forEach(([key, value]) => {
+      if (typeof value === 'string') {
+        data[key] = value.toLowerCase();
+      }
+    });
+
+    if (fieldsToCompare.length === 0) {
+      setError("No changes detected");
+      return;
+    }
+    setError('')
+    const result = await updatePersonal(data);
+
+    if (result?.error) {
+      for (const [field, message] of Object.entries(result.error)) {
+        form.setError(field as keyof TupdatePersonalSchema, {
+          type: "server",
+          message: message
+        });
+      }
+    } else {
+      toast.success('Personal Data Updated')
+      // Reset the form
+      form.reset();
+      // Manually update the default values of the form fields
+      setUserData({
+        firstname: data.firstname ? data.firstname : userData.firstname,
+        lastname: data.lastname ? data.lastname : userData.lastname,
+        phone: data.phone ? data.phone : userData.phone,
+        nationalId: data.nationalId ? data.nationalId : userData.nationalId,
+        age: data.age ? data.age : userData.age,
+        gender: data.gender ? data.gender : userData.gender,
+      })
+      fieldsNotToCompare = []
+      fieldsToCompare = []
+      Object.keys(data).forEach(key => {
+        delete data[key];
+      })
     }
   }
 

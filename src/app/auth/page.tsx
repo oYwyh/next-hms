@@ -2,8 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
-import { TcheckSchema, checkSchema } from "@/app/auth/types";
-import { InsertedCredit } from "@/lib/types";
+import { InsertedCredit, TcheckSchema, checkSchema } from "@/app/auth/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { checkCredit } from "@/actions/auth/auth.action";
 import { useState } from "react";
@@ -30,8 +29,8 @@ export default function AuthPage() {
   const onCheck = async (data: TcheckSchema) => {
     const result = await checkCredit(data);
 
-    
-    if(result?.column != 'unknown') { 
+
+    if (result?.column != 'unknown') {
       setCredit({
         column: result?.column as 'email' | 'phone' | 'nationalId' | 'username',
         credit: data.credit,
@@ -41,7 +40,7 @@ export default function AuthPage() {
       } else {
         setCreditExist(true);
       }
-    }else {
+    } else {
       setError('Invalid credential')
     }
 

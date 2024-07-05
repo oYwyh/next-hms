@@ -1,21 +1,19 @@
 "use client";
 
-import { TsignInSchema, signInSchema } from "@/app/auth/types";
-import { InsertedCredit } from "@/lib/types";
+import { InsertedCredit, TloginSchema, loginSchema } from "@/app/auth/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { signin } from "@/actions/auth/auth.action";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { login } from "@/actions/auth/auth.action";
 import { Form } from "@/components/ui/form";
 import FormField from "@/components/ui/custom/FormField";
+import { Button } from "@/components/ui/button";
 
 export default function Login({ insertedCredit }: { insertedCredit: InsertedCredit }) {
-  const form = useForm<TsignInSchema>({
-    resolver: zodResolver(signInSchema),
+  const form = useForm<TloginSchema>({
+    resolver: zodResolver(loginSchema),
   });
 
-  const onLogin = async (data: TsignInSchema) => {
+  const onLogin = async (data: { [key: string]: string | number } & TloginSchema) => {
 
     Object.entries(data).forEach(([key, value]) => {
       if (typeof value === 'string') {
@@ -23,7 +21,7 @@ export default function Login({ insertedCredit }: { insertedCredit: InsertedCred
       }
     });
 
-    const result = await signin(data);
+    const result = await login(data);
 
     if (result?.error) {
       // Assuming result.error is an object with field-specific errors

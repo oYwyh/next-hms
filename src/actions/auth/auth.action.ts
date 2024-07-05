@@ -3,8 +3,8 @@
 import db from "@/lib/db";
 import { lucia, validateRequest } from "@/lib/auth";
 import { adminTable, userTable } from "@/lib/db/schema";
-import { TcheckSchema, TsignInSchema, TsignUpSchema } from "@/app/auth/types";
-import { TbaseSchema, columnsRegex } from "@/lib/types";
+import { columnsRegex, TcheckSchema, TsignInSchema, TsignUpSchema } from "@/app/auth/types";
+import { TbaseSchema } from "@/lib/types";
 import { uniqueColumnsValidations } from "@/lib/funcs";
 import { hash, verify } from "@node-rs/argon2";
 import { generateIdFromEntropySize } from "lucia";
@@ -12,7 +12,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { sql } from "drizzle-orm";
 
-export async function signup(
+export async function register(
   data: TbaseSchema,
 ) {
   const { username, firstname, lastname, phone, nationalId, age, gender, password, email } = data;
@@ -58,9 +58,7 @@ export async function signup(
   return redirect("/");
 }
 
-
-
-export async function signin(data: TsignInSchema) {
+export async function login(data: TsignInSchema) {
 
   const { column, credit, password } = data;
 

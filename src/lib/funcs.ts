@@ -1,15 +1,14 @@
 import db from "@/lib/db/index";
-import { TbaseSchema, columnsRegex } from "./types";
-import { TaddSchema } from "@/app/(dashboard)/types";
-import * as XLSX from 'xlsx'
+import { TuniqueColumnsSchema } from "@/app/(dashboard)/types";
+import { columnsRegex } from "@/app/auth/types";
 
-export const uniqueColumnsValidations = async (data: TaddSchema) => {
+export const uniqueColumnsValidations = async (data: TuniqueColumnsSchema) => {
   const columns = [
     data.username && { column: 'username', value: data?.username, regex: columnsRegex.username },
     data.email && { column: 'email', value: data?.email, regex: columnsRegex.email },
     data.phone && { column: 'phone', value: data?.phone, regex: columnsRegex.phone },
     data.nationalId && { column: 'nationalId', value: data?.nationalId, regex: columnsRegex.nationalId }
-  ].filter(Boolean); // Filter out undefined values
+  ].filter(Boolean) as { column: string; value: string; regex: RegExp; }[];
 
   const errors: Record<string, string> = {};
 
@@ -30,19 +29,4 @@ export const uniqueColumnsValidations = async (data: TaddSchema) => {
   if (Object.keys(errors).length > 0) {
     return { error: errors };
   }
-}
-
-export const exportXLSX = async (data: {
-  firstname: string;
-  lastname: string;
-  username: string;
-  email: string;
-  phone: string;
-  nationalId: string;
-  age: string;
-  gender: string;
-  role: "admin" | "user" | "doctor" | null;
-  id: string;
-}[]) => {
-
 }

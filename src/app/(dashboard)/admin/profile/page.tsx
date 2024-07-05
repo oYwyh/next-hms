@@ -3,10 +3,11 @@ import FormUpdatePassword from "@/app/(dashboard)/_components/FormUpdatePassword
 import { useGetUser } from "@/hooks/userHooks";
 import { AdminUser } from "@/lib/types";
 import FormUpdatePersonal from "../../_components/FormUpdatePersonal";
+import { useEffect } from "react";
 
 export default async function ProfilePage() {
-  const adminUser = await useGetUser();
 
+  const adminUser = await useGetUser();
   const user = adminUser as AdminUser
 
   return (

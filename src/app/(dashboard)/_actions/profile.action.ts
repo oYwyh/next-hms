@@ -1,12 +1,13 @@
 'use server'
 
 import db from "@/lib/db";
-import { TupdatePasswordSchema, TupdatePersonalSchema, TupdateProfileSchema, TupdateWorkSchema } from "../types"
+import { TpasswordSchema, TupdatePasswordSchema, TupdatePersonalSchema, TupdateProfileSchema } from "../types"
 import { doctorTable, userTable, workDaysTable } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { hash } from "@node-rs/argon2";
-import { columnsRegex } from "@/lib/types";
 import { error } from "console";
+import { columnsRegex } from "@/app/auth/types";
+import { uniqueColumnsValidations } from "@/lib/funcs";
 
 export const updateProfile = async (data: TupdateProfileSchema) => {
     const { username, email, id } = data;
@@ -37,7 +38,7 @@ export const updateProfile = async (data: TupdateProfileSchema) => {
         username: username,
         email: email,
     })
-    .where(eq(userTable.id, id));
+        .where(eq(userTable.id, id));
 
     return {
         user: user,
@@ -45,53 +46,11 @@ export const updateProfile = async (data: TupdateProfileSchema) => {
 };
 
 export const updatePersonal = async (data: TupdatePersonalSchema) => {
-    const { id, firstname, lastname, phone, nationalId, age, gender  } = data;
-
-    if (!id) {
-        throw new Error("User ID is required");
-    }
+    const { id, firstname, lastname, phone, nationalId, age, gender } = data;
 
     // Check if the email exists and belongs to a different user
-    const phoneExist = await db.query.userTable.findFirst({
-        columns: { phone: true },
-        where: (userTable, { eq, and, not }) => and(
-            eq(userTable.phone, phone),
-            not(eq(userTable.id, id))
-        ),
-    })
-
-    if (phoneExist) {
-        return {
-            error: 'Phone Exists',
-        };
-    }
-
-    if(columnsRegex.phone.test(phone) === false) {
-        return {
-            error: 'Invalid Phone'
-        }
-    }
-
-    const nationalIdExist = await db.query.userTable.findFirst({
-        columns: { nationalId: true },
-        where: (userTable, { eq, and, not }) => and(
-            eq(userTable.nationalId, nationalId),
-            not(eq(userTable.id, id))
-        ),
-    })
-
-    
-    if (nationalIdExist) {
-        return {
-            error: 'National Id Exists',
-        };
-    }
-
-    if(columnsRegex.nationalId.test(nationalId) === false) {
-        return {
-            error: 'Invalid National Id'
-        }
-    }
+    const result = await uniqueColumnsValidations(data);
+    if (result?.error) return { error: result?.error };
 
     // Update the user with the new username and email
     const user = await db.update(userTable).set({
@@ -101,8 +60,7 @@ export const updatePersonal = async (data: TupdatePersonalSchema) => {
         nationalId: nationalId,
         age: age,
         gender: gender,
-    })
-    .where(eq(userTable.id, id));
+    }).where(sql`${userTable.id} = ${id}`);
 
     return {
         user: user,
@@ -110,50 +68,21 @@ export const updatePersonal = async (data: TupdatePersonalSchema) => {
 };
 
 
-export const updatePassword = async (data: TupdatePasswordSchema) => {
+export const updatePassword = async (data: TpasswordSchema) => {
     const { id, password } = data;
-
     const passwordHash = await hash(password, {
         memoryCost: 19456,
         timeCost: 2,
         outputLen: 32,
         parallelism: 1,
     });
+    const result = await db.update(userTable).set({ password: passwordHash }).where(sql`${userTable.id} = ${id}`).returning();
 
-    if (!id) {
-        throw new Error("User ID is required");
+    if (result) {
+        return {
+            done: true
+        }
+    } else {
+        throw new Error('Failed to update password');
     }
-
-    const user = await db.update(userTable).set({
-        password: passwordHash
-    })
-    .where(eq(userTable.id, id))
 }
-
-export const updateWork = async (data: TupdateWorkSchema, selectedDays: string[]) => {
-    const { id, doctorId } = data;
-
-    if (!id || !doctorId) {
-        throw new Error("User ID is required");
-    }
-
-
-    selectedDays.forEach(async (day) => {
-        const dayTest = await db.insert(workDaysTable).values({
-            doctorId: String(doctorId),
-            day: day
-        })
-
-        console.log(dayTest)
-    })
-
-    // const result = await db.update(doctorTable).set({
-    //     specialty: specialty
-    // })
-    // .where(eq(doctorTable.id, doctor?.id))
-
-    // return {
-    //     result,
-    // }
-}
-

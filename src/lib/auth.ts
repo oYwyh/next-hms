@@ -65,7 +65,7 @@ export const validateRequest = cache(
           sessionCookie.attributes,
         );
       }
-    } catch {}
+    } catch { }
     return result;
   },
 );
@@ -90,4 +90,9 @@ interface DatabaseUserAttributes {
   age: string;
   gender: 'male' | 'female';
   role: string;
+  admin?: {
+    id: string | number;
+    super: boolean;
+    user_id: string;
+  }
 }

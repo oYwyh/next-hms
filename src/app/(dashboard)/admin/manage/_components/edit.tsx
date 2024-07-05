@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Form, FormMessage } from "@/components/ui/form";
 import FormField from "@/components/ui/custom/FormField";
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -15,22 +15,27 @@ import {
   DialogFooter,
   DialogHeader,
 } from "@/components/ui/dialog";
-import { TeditSchema, editSchema } from "@/app/(dashboard)/types";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-import { edit } from "@/app/(dashboard)/_actions/operations.action";
+import { TeditSchema, TpasswordSchema, editSchema, passwordSchema } from "@/app/(dashboard)/types";
+
+import { edit, editPassword } from "@/app/(dashboard)/_actions/operations.action";
 import ManageForm from "./ManageForm";
+import ManagePassword from "./ManagePassword";
+import { Button } from "@/components/ui/button";
+import { usePathname } from "next/navigation";
 
 type THours = { day: string; value: string };
 
 type TEdit = {
   role: 'admin' | 'doctor' | 'user'
   userId: string
-  userData: TeditSchema
+  userData: { [key: string]: string } & TeditSchema
   workTime: any
+  setPopOpen: Dispatch<SetStateAction<boolean | undefined>>;
 }
 
-
-export default function Edit({ role, userId, userData, workTime }: TEdit) {
+export default function Edit({ role, userId, userData, workTime, setPopOpen }: TEdit) {
   const [open, setOpen] = useState(false);
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [selectedHours, setSelectedHours] = useState<THours[]>([]);
@@ -57,7 +62,7 @@ export default function Edit({ role, userId, userData, workTime }: TEdit) {
 
   }, [userData]);
 
-  const form = useForm<TeditSchema>({
+  const accountForm = useForm<TeditSchema>({
     resolver: zodResolver(editSchema),
     defaultValues: {
       username: userData?.username || "",
@@ -72,10 +77,18 @@ export default function Edit({ role, userId, userData, workTime }: TEdit) {
     }
   });
 
-  const onSubmit = async (data: TeditSchema) => {
+  const passwordForm = useForm<TpasswordSchema>({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: {
+      password: "",
+      confirmPassword: ""
+    }
+  });
 
+
+  const onEditAccount = async (data: { [key: string]: string } & TeditSchema) => {
     // Compare form data with userData and log any matching fields
-    const userFields = Object.keys(userData).filter(key => key !== 'workTime' && key !== 'id' && key !== 'role');
+    const userFields = Object.keys(userData).filter(key => key !== 'workTime' && key !== 'id' && key !== 'role')
     const fieldsNotToCompare: string[] = [];
     const fieldsToCompare: string[] = [];
 
@@ -123,7 +136,7 @@ export default function Edit({ role, userId, userData, workTime }: TEdit) {
 
       const daysChanged = !(selectedDays.length === originalDays.length && selectedDays.every((day) => originalDays.includes(day)));
       const hoursChanged = !(selectedHours.length === originalHours.length && selectedHours.every((hour) => {
-        return originalHours.some(originalHour => originalHour.day === hour.day && originalHour.value === hour.value);
+        return originalHours.some((originalHour: { day: string, value: string }) => originalHour.day === hour.day && originalHour.value === hour.value);
       }));
 
       if (fieldsToCompare.length === 0 && !daysChanged && !hoursChanged) {
@@ -131,49 +144,95 @@ export default function Edit({ role, userId, userData, workTime }: TEdit) {
         return;
       }
     }
+
     if (fieldsToCompare.length === 0) {
       setError("No changes detected");
       return;
     }
 
     let result;
-    result = await edit(data, role, userId, 'edit', selectedDays, selectedHours, fieldsToCompare);
     if (role == 'doctor') {
+      result = await edit(data, role, userId, 'edit', selectedDays, selectedHours);
     } else {
       result = await edit(data, role, userId, 'edit');
     }
 
+    console.log(result)
     if (result?.done) {
-      form.reset();
+      accountForm.reset();
       setSelectedDays([]);
       setSelectedHours([]);
       setOpen(false);
+      setPopOpen(false);
+
     } else if (result?.error) {
       for (const [field, message] of Object.entries(result.error)) {
-        form.setError(field as keyof TeditSchema, {
+        accountForm.setError(field as keyof TeditSchema, {
           type: "server",
           message: message
         });
       }
     }
   };
+
+  const onEditPassword = async (data: TpasswordSchema) => {
+
+    const result = await editPassword(data, userId);
+
+    if (result?.done) {
+      passwordForm.reset();
+      setSelectedDays([]);
+      setSelectedHours([]);
+      setOpen(false);
+      setPopOpen(false);
+    }
+  }
+
   return (
     <div>
-      <ManageForm
-        open={open}
-        setOpen={setOpen}
-        role={role}
-        form={form}
-        onSubmit={onSubmit}
-        daysList={daysList}
-        selectedDays={selectedDays}
-        setSelectedDays={setSelectedDays}
-        selectedHours={selectedHours}
-        setSelectedHours={setSelectedHours}
-        hoursList={hoursList}
-        error={error}
-        operation={'edit'}
-      />
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button variant="outline" className='capitalize'>Edit {role}</Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className='capitalize'>Edit {role}</DialogTitle>
+            <DialogDescription>
+              Anyone who has this link will be able to view this.
+            </DialogDescription>
+          </DialogHeader>
+          <Tabs defaultValue="account" className="w-[100%]">
+            <TabsList className="w-[100%]">
+              <TabsTrigger className="w-[100%]" value="account">Account</TabsTrigger>
+              <TabsTrigger className="w-[100%]" value="password">Password</TabsTrigger>
+            </TabsList>
+            <TabsContent value="account">
+              <ManageForm
+                open={open}
+                role={role}
+                form={accountForm}
+                onSubmit={onEditAccount}
+                daysList={daysList}
+                selectedDays={selectedDays}
+                setSelectedDays={setSelectedDays}
+                selectedHours={selectedHours}
+                setSelectedHours={setSelectedHours}
+                hoursList={hoursList}
+                error={error}
+                operation={'edit'}
+              />
+            </TabsContent>
+            <TabsContent value="password">
+              <ManagePassword
+                form={passwordForm}
+                onSubmit={onEditPassword}
+                error={error}
+                operation={'edit'}
+              />
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
