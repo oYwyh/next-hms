@@ -12,6 +12,8 @@ import {
   getPaginationRowModel,
   useReactTable,
   VisibilityState,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
 } from "@tanstack/react-table"
 
 import {
@@ -26,29 +28,34 @@ import {
 import { Input } from "@/components/ui/input"
 import { DataTablePagination } from "./DataTablePagination"
 import { DataTableViewOptions } from "./DataTableViewOptions"
+import { DataTableToolbar } from "./DataTableToolbar"
 
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
-  data: TData[]
+  data: TData[],
+  hiddenColumns?: string[],
+  restrictedColumns?: string[],
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  hiddenColumns,
+  restrictedColumns
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   )
   const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({
-      firstname: false,
-      lastname: false,
-      nationalId: false,
-      gender: false,
-      role: false
-    })
+    React.useState<VisibilityState>(
+      hiddenColumns ? hiddenColumns.reduce((acc, col) => {
+        acc[col] = false;
+        return acc;
+      }, {} as VisibilityState) : {}
+    );
+
   const [rowSelection, setRowSelection] = React.useState({})
 
   const table = useReactTable({
@@ -62,6 +69,8 @@ export function DataTable<TData, TValue>({
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
     state: {
       sorting,
       columnFilters,
@@ -72,16 +81,20 @@ export function DataTable<TData, TValue>({
 
   return (
     <div>
-      <div className="flex items-center py-4">
-        <Input
-          placeholder="Filter emails..."
-          value={table.getColumn("email")?.getFilterValue() as string}
-          onChange={(event) =>
-            table.getColumn("email")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
-        <DataTableViewOptions table={table} />
+      <div className="flex items-center justify-between py-4">
+        <div className="flex items-center space-x-2">
+          <Input
+            placeholder="Filter emails..."
+            value={table.getColumn("email")?.getFilterValue() as string}
+            onChange={(event) =>
+              table.getColumn("email")?.setFilterValue(event.target.value)
+            }
+            className="max-w-sm"
+          />
+          <DataTableToolbar table={table} />
+        </div>
+        <DataTableViewOptions table={table} restrictedColumns={restrictedColumns} />
+
       </div>
       <div className="rounded-md border">
         <Table>
@@ -110,11 +123,13 @@ export function DataTable<TData, TValue>({
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
                 >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
+                  {row.getVisibleCells().map((cell) => {
+                    return (
+                      <TableCell key={cell.id}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    )
+                  })}
                 </TableRow>
               ))
             ) : (

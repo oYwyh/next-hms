@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { Many, relations } from "drizzle-orm";
 import {
   serial,
   pgTable,
@@ -26,14 +26,6 @@ export const userTable = pgTable("user", {
   age: varchar("age", { length: 255 }).notNull(),
   gender: varchar("gender", { length: 255 }).notNull(),
   password: varchar("password", { length: 255 }).notNull(),
-  //
-  // chronicDisease: varchar("diesease", { length: 255 }).notNull(),
-  // frequentMedications: varchar("frequentMedications", { length: 255 }).notNull(),
-  // knownAllergies: varchar("knownAllergies", { length: 255 }).notNull(),
-  // weight: integer("weight").notNull(),
-  // height: integer("height").notNull(),  
-  // address: varchar("address", { length: 255 }).notNull(),
-  // admission: varchar('admission', { length: 255 }).notNull(),
   role: UserRole("userRole").default("user"),
 });
 
@@ -71,9 +63,61 @@ export const workHoursTable = pgTable('work_hours', {
   endAt: time('end_time').notNull(),
 });
 
+export const Status = pgEnum("status", ["pending", "cancelled", "completed"]);
+
+export const appointmentTable = pgTable("appointment", {
+  id: serial('id').primaryKey(),
+  date: text("date").notNull(),
+  from: text("from").notNull(),
+  to: text("to").notNull(),
+  user_id: text("user_id")
+    .references(() => userTable.id, {
+      onDelete: "cascade",
+    })
+    .notNull(),
+  doctor_id: text("doctor_id")
+    .references(() => doctorTable.id, {
+      onDelete: "cascade",
+    })
+    .notNull(),
+  status: Status("status").default("pending"),
+});
+
+export const reservationTable = pgTable("reservation", {
+  id: serial('id').primaryKey(),
+  history: text("history").notNull(),
+  diagnosis: text("diagnosis").notNull(),
+  laboratory: text("laboratory").notNull(),
+  radiology: text("radiology").notNull(),
+  medicine: text("medicine").notNull(),
+  appointmentId: integer("appointment_id").notNull().references(() => appointmentTable.id, { onDelete: 'cascade' }),
+});
+
+export const prescriptionTable = pgTable("prescription", {
+  id: serial('id').primaryKey(),
+  laboratory: text("laboratory").notNull(),
+  radiology: text("radiology").notNull(),
+  medicine: text("medicine").notNull(),
+  reservationId: integer("reservation_id").notNull().references(() => appointmentTable.id, { onDelete: 'cascade' }),
+});
+
+export const userMedicalFoldersTable = pgTable("user_medical_folders", {
+  id: serial('id').primaryKey(),
+  name: text("name").unique().notNull(),
+  userId: text("user_id").notNull().references(() => userTable.id, { onDelete: 'cascade' }),
+})
+
+export const userMedicalFilesTable = pgTable("user_medical_files", {
+  id: serial('id').primaryKey(),
+  name: text("name").notNull(),
+  folderId: integer("folder_id").notNull().references(() => userMedicalFoldersTable.id, { onDelete: 'cascade' })
+})
+
 // relations
 
-export const userRelations = relations(userTable, ({ one }) => ({
+export const userRelations = relations(userTable, ({ one, many }) => ({
+  appointments: many(appointmentTable),
+  folders: many(userMedicalFoldersTable),
   doctor: one(doctorTable, {
     fields: [userTable.id],
     references: [doctorTable.user_id],
@@ -84,7 +128,12 @@ export const userRelations = relations(userTable, ({ one }) => ({
   }),
 }));
 
-export const doctorRelations = relations(doctorTable, ({ many }) => ({
+export const doctorRelations = relations(doctorTable, ({ one, many }) => ({
+  user: one(userTable, {
+    fields: [doctorTable.user_id],
+    references: [userTable.id],
+  }),
+  appointments: many(appointmentTable),
   workDays: many(workDaysTable),
 }));
 
@@ -102,6 +151,55 @@ export const workHourRelations = relations(workHoursTable, ({ one }) => ({
     references: [workDaysTable.id],
   }),
 }));
+
+
+export const appointmentRelation = relations(appointmentTable, ({ one }) => ({
+  reservation: one(reservationTable, {
+    fields: [appointmentTable.id],
+    references: [reservationTable.appointmentId],
+  }),
+  user: one(userTable, {
+    fields: [appointmentTable.user_id],
+    references: [userTable.id],
+  }),
+  doctor: one(doctorTable, {
+    fields: [appointmentTable.doctor_id],
+    references: [doctorTable.user_id],
+  }),
+}))
+
+export const reservationRelation = relations(reservationTable, ({ one }) => ({
+  appointment: one(appointmentTable, {
+    fields: [reservationTable.appointmentId],
+    references: [appointmentTable.id],
+  }),
+  prescription: one(prescriptionTable, {
+    fields: [reservationTable.id],
+    references: [prescriptionTable.reservationId],
+  }),
+}))
+
+export const prescriptionRelation = relations(prescriptionTable, ({ one }) => ({
+  reservation: one(reservationTable, {
+    fields: [prescriptionTable.reservationId],
+    references: [reservationTable.id],
+  }),
+}))
+
+export const userMedicalFoldersRelations = relations(userMedicalFoldersTable, ({ one, many }) => ({
+  files: many(userMedicalFilesTable),
+  user: one(userTable, {
+    fields: [userMedicalFoldersTable.userId],
+    references: [userTable.id],
+  }),
+}))
+
+export const userMedicalFilesRelations = relations(userMedicalFilesTable, ({ one }) => ({
+  folder: one(userMedicalFoldersTable, {
+    fields: [userMedicalFilesTable.folderId],
+    references: [userMedicalFoldersTable.id],
+  }),
+}))
 
 export const sessionTable = pgTable("session", {
   id: text("id").primaryKey(),

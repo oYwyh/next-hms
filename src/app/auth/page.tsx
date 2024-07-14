@@ -1,7 +1,6 @@
 "use client";
 
 import { useForm } from "react-hook-form";
-import { Input } from "@/components/ui/input";
 import { InsertedCredit, TcheckSchema, checkSchema } from "@/app/auth/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { checkCredit } from "@/actions/auth/auth.action";
@@ -26,7 +25,7 @@ export default function AuthPage() {
     resolver: zodResolver(checkSchema),
   });
 
-  const onCheck = async (data: TcheckSchema) => {
+  const onSubmit = async (data: TcheckSchema) => {
     const result = await checkCredit(data);
 
 
@@ -62,7 +61,7 @@ export default function AuthPage() {
             {creditExist !== true && creditExist !== false && (
               <>
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onCheck)}>
+                  <form onSubmit={form.handleSubmit(onSubmit)}>
                     <FormField form={form} name="credit" />
                     <Button type="submit">Submit</Button>
                     {error && <FormMessage>{error}</FormMessage>}

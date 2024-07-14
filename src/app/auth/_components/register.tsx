@@ -60,7 +60,7 @@ export default function Register({ insertedCredit }: { insertedCredit: InsertedC
           <FormField form={form} name="nationalId" />
         )}
         <FormField form={form} name="age" />
-        <FormField form={form} name="gender" />
+        <FormField form={form} name="gender" select="gender" />
         <FormField form={form} name="password" />
         <FormField form={form} name="confirmPassword" />
         <Button type="submit">Register</Button>

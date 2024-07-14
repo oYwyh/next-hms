@@ -83,16 +83,18 @@ export async function edit(
 
   const { username, firstname, lastname, phone, nationalId, age, gender, email } = data;
 
-  await db.update(userTable).set({
-    firstname: firstname,
-    lastname: lastname,
-    username: username,
-    email: email,
-    phone: phone,
-    nationalId: nationalId,
-    age: age,
-    gender: gender,
-  }).where(sql`${userTable.id} = ${userId}`).returning();
+  if (username || firstname || lastname || phone || nationalId || age || gender || email) {
+    await db.update(userTable).set({
+      firstname: firstname,
+      lastname: lastname,
+      username: username,
+      email: email,
+      phone: phone,
+      nationalId: nationalId,
+      age: age,
+      gender: gender,
+    }).where(sql`${userTable.id} = ${userId}`).returning();
+  }
 
   // doctor
   const doctor = await doctorRole(data, role, selectedDays, selectedHours, userId, operation);

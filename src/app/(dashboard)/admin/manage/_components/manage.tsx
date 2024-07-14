@@ -1,10 +1,7 @@
-import { DataTable } from "@/components/ui/custom/DataTable";
-import { DoctorColumnsTypes, UserColumnsTypes, DoctorTableColumns, UserTableColumns, AdminTableColumns, DoctorTableColumnsWithPrivileges, UserTableColumnsWithPrivileges, AdminTableColumnsWithPrivileges } from "@/components/ui/custom/Columns";
+import { DataTable } from "@/components/ui/table/DataTable";
+import { DoctorColumnsTypes, UserColumnsTypes, DoctorTableColumns, UserTableColumns, AdminTableColumns, DoctorTableColumnsWithPrivileges, UserTableColumnsWithPrivileges, AdminTableColumnsWithPrivileges } from "./columns";
 import db from "@/lib/db";
 import AddPage from "./add";
-import { exportXLSX } from "@/lib/funcs";
-import { Button } from "@/components/ui/button";
-import { validateRequest } from "@/lib/auth";
 import { useGetUser } from "@/hooks/userHooks";
 
 async function getData(role: string) {
@@ -107,27 +104,27 @@ export default async function ManagePage({ role }: { role: 'admin' | 'doctor' | 
       {role == 'doctor' && (
         <>
           {isSuper ? (
-            <DataTable columns={DoctorTableColumnsWithPrivileges} data={data} />
+            <DataTable columns={DoctorTableColumnsWithPrivileges} data={data} hiddenColumns={['id']} />
           ) : (
-            <DataTable columns={DoctorTableColumns} data={data} />
+            <DataTable columns={DoctorTableColumns} data={data} hiddenColumns={['id']} />
           )}
         </>
       )}
       {role == 'user' && (
         <>
           {isSuper ? (
-            <DataTable columns={UserTableColumnsWithPrivileges} data={data} />
+            <DataTable columns={UserTableColumnsWithPrivileges} data={data} hiddenColumns={['id']} />
           ) : (
-            <DataTable columns={UserTableColumns} data={data} />
+            <DataTable columns={UserTableColumns} data={data} hiddenColumns={['id']} />
           )}
         </>
       )}
       {role == 'admin' && (
         <>
           {isSuper ? (
-            <DataTable columns={AdminTableColumnsWithPrivileges} data={data} />
+            <DataTable columns={AdminTableColumnsWithPrivileges} data={data} hiddenColumns={['id']} />
           ) : (
-            <DataTable columns={AdminTableColumns} data={data} />
+            <DataTable columns={AdminTableColumns} data={data} hiddenColumns={['id']} />
           )}
         </>
       )}

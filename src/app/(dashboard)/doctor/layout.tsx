@@ -1,3 +1,4 @@
+import { ClientStuffProvider } from "@/app/ClientStuffProvider";
 import { validateRequest } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
@@ -12,5 +13,9 @@ export default async function AdminLayout({
     redirect("/");
   }
 
-  return children;
+  return (
+    <ClientStuffProvider>
+      {children}
+    </ClientStuffProvider>
+  );
 }

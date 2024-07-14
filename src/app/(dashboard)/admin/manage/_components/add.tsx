@@ -35,6 +35,7 @@ export default function Add({ role }: { role: "admin" | "doctor" | "user" }) {
   });
 
   const onSubmit = async (data: { [key: string]: string } & TaddSchema) => {
+
     if (role == 'doctor') {
       if (!selectedDays?.length || !selectedHours?.length) {
         setError("Please select days and hours");

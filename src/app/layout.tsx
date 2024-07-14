@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "react-hot-toast";
 
 import { cn } from "@/lib/utils";
+import { ReactQueryProvider } from "./ClientStuffProvider";
 
 const fontSans = FontSans({
   subsets: ["latin"],

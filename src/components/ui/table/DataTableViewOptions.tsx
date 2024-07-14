@@ -15,10 +15,12 @@ import {
 
 interface DataTableViewOptionsProps<TData> {
   table: Table<TData>
+  restrictedColumns?: string[]
 }
 
 export function DataTableViewOptions<TData>({
   table,
+  restrictedColumns = []
 }: DataTableViewOptionsProps<TData>) {
   return (
     <DropdownMenu>
@@ -38,8 +40,9 @@ export function DataTableViewOptions<TData>({
         {table
           .getAllColumns()
           .filter(
-            (column) =>
-              typeof column.accessorFn !== "undefined" && column.getCanHide()
+            (column) => {
+              return typeof column.accessorFn !== "undefined" && column.getCanHide() && !restrictedColumns?.includes(column.id)
+            }
           )
           .map((column) => {
             return (

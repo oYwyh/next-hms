@@ -1,0 +1,157 @@
+'use client'
+
+
+import * as htmlToImage from 'html-to-image';
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { User } from "@/lib/types";
+import { useEffect, useState } from "react";
+import { createPrescription } from '@/app/(dashboard)/doctor/doctor.actions';
+import { useRouter } from 'next/navigation';
+
+type TReservation = {
+    id: string;
+    [key: string]: any;
+}
+
+export default function Prescription(
+    {
+        appointmentId,
+        reservation,
+        prescription,
+        patient,
+        diagnosis,
+        prescriptionType
+    }:
+        {
+            appointmentId: string | number
+            reservation: any,
+            prescription: any,
+            patient: any /* User */,
+            diagnosis: string
+            prescriptionType: 'laboratory' | 'radiology' | 'medicine'
+        }
+) {
+    const [values, setValues] = useState<string[]>(reservation[prescriptionType].split(','));
+    const [textareaValue, setTextareaValue] = useState<string>(reservation[prescriptionType].split(',').join('\n'));
+    const [prescriptionTypes] = useState(['laboratory', 'radiology', 'medicine']);
+    const [existingPrescriptionTypes, setExistingPrescriptionTypes] = useState<string[]>([]);
+    const [clicked, setClicked] = useState<boolean>(false);
+    const router = useRouter()
+
+    useEffect(() => {
+        const prescriptionTypesKeys = Object.keys(reservation).filter(key => prescriptionTypes.includes(key) && key !== prescriptionType);
+        const newExists = prescriptionTypesKeys
+            .filter((item) => {
+                const reservationHasValue = reservation[item] && reservation[item].trim() !== '';
+                const prescriptionHasValue = prescription[item] && prescription[item].trim() !== ''
+
+                // Keep the item if it has a value in reservation but not in prescription
+                // Remove the item if it has a value in both reservation and prescription
+                // Remove the item if it doesn't have a value in either reservation or prescription
+                return reservationHasValue && !prescriptionHasValue;
+            })
+            .map(item => item);
+
+        setExistingPrescriptionTypes(newExists);
+    }, [reservation, prescription, prescriptionTypes]);
+
+
+    useEffect(() => {
+        if (existingPrescriptionTypes.length > 0) {
+            console.log(existingPrescriptionTypes)
+        }
+    }, [existingPrescriptionTypes]);
+
+    const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        setTextareaValue(e.target.value);
+    };
+
+    const handleSaveClick = () => {
+        const lines = textareaValue.split('\n').filter(line => line.trim() !== '');
+        setValues(lines);
+        // handleConvertToImage()
+    };
+
+    const handleConvertToImage = () => {
+        const element = document.getElementById('test'); // Replace with your div id
+        const scale = 2; // Adjust the scale factor as needed (2 means 2x the original resolution)
+
+        if (!element) return;
+        htmlToImage.toPng(element, { pixelRatio: scale })
+            .then((dataUrl) => {
+                const img = new Image();
+                img.src = dataUrl;
+                document.body.appendChild(img); // Example: append the image to the body
+            })
+            .catch((error) => {
+                console.error('Error converting div to image:', error);
+            });
+    };
+
+    const handleSubmit = async () => {
+        let result;
+        if (existingPrescriptionTypes.length === 0) {
+            result = await createPrescription(appointmentId, reservation.id, values.join(','), prescriptionType, true)
+        } else {
+            result = await createPrescription(appointmentId, reservation.id, values.join(','), prescriptionType, false)
+        }
+
+        if (result && result.done) {
+            setClicked(true)
+            setExistingPrescriptionTypes((prevTypes) => {
+                const updatedTypes = prevTypes.filter((type) => type !== prescriptionType);
+                return updatedTypes;
+            });
+        }
+    }
+
+    // Add this useEffect hook to handle redirection
+    useEffect(() => {
+        if (existingPrescriptionTypes && clicked) {
+            if (existingPrescriptionTypes.length === 0) {
+                router.push('/doctor/appointments');
+            } else if (existingPrescriptionTypes.includes('laboratory')) {
+                router.push(`/doctor/appointments/reservation/${appointmentId}/prescriptions/laboratory`);
+            } else if (existingPrescriptionTypes.includes('radiology')) {
+                router.push(`/doctor/appointments/reservation/${appointmentId}/prescriptions/radiology`);
+            } else if (existingPrescriptionTypes.includes('medicine')) {
+                router.push(`/doctor/appointments/reservation/${appointmentId}/prescriptions/medicine`);
+            }
+        }
+    }, [existingPrescriptionTypes, clicked]);
+
+
+    return (
+        <div className='flex flex-col gap-5'>
+            <div className="grid grid-cols-2 gap-3 justify-between py-3 mx-3">
+                <div id='test' className="bg-white h-[100%] min-w-[500px] max-w-[500px] m-auto py-2 px-5 rounded-sm">
+                    <div className="flex flex-row justify-between gap-3">
+                        <div className="flex flex-col">
+                            <p>Name: {patient.firstname + ' ' + patient.lastname}</p>
+                            <p>Email: {patient.age}</p>
+                        </div>
+                        <div className="flex flex-col">
+                            <p>Diagnosis: {diagnosis}</p>
+                            <p>Age: {patient.age}</p>
+                        </div>
+                    </div>
+                    <Separator className="my-3" />
+                    <div>
+                        {values.map((value, index) => {
+                            return <p key={index}>- {value}</p>
+                        })}
+                    </div>
+                </div>
+                <div className="flex flex-col">
+                    <Textarea name="laboratory" value={textareaValue} onChange={handleTextareaChange} />
+                    <Button onClick={handleSaveClick}>Save</Button>
+                </div>
+            </div>
+            <Button onClick={handleSubmit}>
+                Continue
+            </Button>
+        </div>
+    )
+}

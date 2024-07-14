@@ -16,6 +16,9 @@ export default async function AdminPage() {
             <Link href="/admin/profile">Admin Profile</Link>
           </Button>
           <Button>
+            <Link href="/admin/manage/admins">Manage Admins</Link>
+          </Button>
+          <Button>
             <Link href="/admin/manage/doctors">Manage Doctors</Link>
           </Button>
           <Button>

@@ -2,10 +2,11 @@ import { logout } from "@/actions/auth/auth.action";
 import { Button } from "@/components/ui/button";
 import { useGetUser } from "@/hooks/userHooks";
 import { validateRequest } from "@/lib/auth";
+import { cookies } from "next/headers";
 import Link from "next/link";
 
 export default async function UserPage() {
-  const user = await useGetUser();
+  const user = await validateRequest();
 
   return (
     <>
@@ -15,6 +16,25 @@ export default async function UserPage() {
           <Button>
             <Link href="/user/profile">User Profile</Link>
           </Button>
+          <Button>
+            <Link href="/user/appointments">User Appointments</Link>
+          </Button>
+          <Button>
+            <Link href="/user/files">User Medical Files</Link>
+          </Button>
+          <Button>
+            <Link href={{
+              pathname: '/user/booking',
+            }}
+            >
+              Booking
+            </Link>
+          </Button>
+          {/* <Button>
+            <Link href="/user/appointments">
+              Appointments
+            </Link>
+          </Button> */}
           <form action={logout}>
             <Button>Sign out</Button>
           </form>

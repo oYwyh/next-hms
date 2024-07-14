@@ -17,6 +17,11 @@ export default async function DoctorPage() {
               Doctor Profile
             </Button>
           </Link>
+          <Link href="/doctor/appointments">
+            <Button>
+              Doctor Appointments
+            </Button>
+          </Link>
           <form action={logout}>
             <Button>Sign out</Button>
           </form>

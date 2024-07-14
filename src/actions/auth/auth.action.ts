@@ -2,8 +2,8 @@
 
 import db from "@/lib/db";
 import { lucia, validateRequest } from "@/lib/auth";
-import { adminTable, userTable } from "@/lib/db/schema";
-import { columnsRegex, TcheckSchema, TsignInSchema, TsignUpSchema } from "@/app/auth/types";
+import { adminTable, appointmentTable, userTable } from "@/lib/db/schema";
+import { columnsRegex, TcheckSchema, TloginSchema, TregisterSchema } from "@/app/auth/types";
 import { TbaseSchema } from "@/lib/types";
 import { uniqueColumnsValidations } from "@/lib/funcs";
 import { hash, verify } from "@node-rs/argon2";
@@ -13,7 +13,7 @@ import { redirect } from "next/navigation";
 import { sql } from "drizzle-orm";
 
 export async function register(
-  data: TbaseSchema,
+  data: TregisterSchema,
 ) {
   const { username, firstname, lastname, phone, nationalId, age, gender, password, email } = data;
 
@@ -41,8 +41,19 @@ export async function register(
     age,
     gender,
     password: passwordHash,
-    role: 'admin',
+    role: 'user'
   }).returning();
+
+  if (user[0]?.role == 'user') {
+    await db.insert(appointmentTable).values({
+      user_id: userId,
+      doctor_id: userId,
+      date: '2022-12-31',
+      time: '10:00 AM',
+      status: 'pending',
+    });
+
+  }
 
   if (user[0]?.role == 'admin') {
     await db.insert(adminTable).values({
@@ -58,7 +69,7 @@ export async function register(
   return redirect("/");
 }
 
-export async function login(data: TsignInSchema) {
+export async function login(data: TloginSchema) {
 
   const { column, credit, password } = data;
 
