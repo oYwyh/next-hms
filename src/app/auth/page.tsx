@@ -7,14 +7,14 @@ import { checkCredit } from "@/actions/auth/auth.action";
 import { useState } from "react";
 import Login from "./_components/login";
 import Register from "./_components/register";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { Button } from "@/components/ui/Button";
 import FormField from "@/components/ui/custom/FormField";
 
 import {
   Form,
   FormMessage,
-} from "@/components/ui/form";
+} from "@/components/ui/Form";
 
 export default function AuthPage() {
   const [error, setError] = useState<string>('');

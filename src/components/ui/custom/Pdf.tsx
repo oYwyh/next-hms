@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, MouseEvent } from 'react';
 import { pdfjs, Document, Page } from 'react-pdf';
 import { ChevronLeft, ChevronRight, Fullscreen, Trash2 } from "lucide-react";
@@ -8,7 +10,11 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/Dialog"
+import { Button } from '../Button';
+import Link from 'next/link';
+import { deleteFile } from '@/lib/r2';
+import { useQueryClient } from '@tanstack/react-query';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     'pdfjs-dist/build/pdf.worker.min.mjs',
@@ -17,12 +23,6 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
-import { Button } from '../button';
-import { redirect } from 'next/navigation';
-import { ConsoleLogWriter } from 'drizzle-orm';
-import Link from 'next/link';
-import { deleteFile } from '@/lib/r2';
-import { useQueryClient } from '@tanstack/react-query';
 
 export default function Pdf({ name }: { name: string }) {
     const [numPages, setNumPages] = useState<number | null>(null);
@@ -51,7 +51,7 @@ export default function Pdf({ name }: { name: string }) {
         <>
             <div className="flex flex-col gpa-2 items-center justify-center relative">
                 <Document
-                    className={'z-10 h-[800px] rounded-lg'}
+                    className={'z-10 h-[800px] rounded-lg shadow-lg'}
                     file={`${process.env.NEXT_PUBLIC_R2_FILES_URL}/${name}`}
                     onLoadSuccess={onDocumentLoadSuccess}
                 >

@@ -1,6 +1,6 @@
 'use client'
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import {
     AlertDialog,
     AlertDialogCancel,
@@ -10,7 +10,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
     AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/AlertDialog"
 
 import { Dispatch, SetStateAction, useState } from "react";
 import { cancel } from "../user/user.actions";

@@ -1,12 +1,12 @@
 import { TaddSchema, TeditSchema } from "@/app/(dashboard)/types";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import FormField from "@/components/ui/custom/FormField";
 import Hours from "@/components/ui/custom/Hours";
-import { DialogFooter } from "@/components/ui/dialog";
-import { Form, FormMessage } from "@/components/ui/form";
-import { MultiSelect } from "@/components/ui/multi-select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DialogFooter } from "@/components/ui/Dialog";
+import { Form, FormMessage } from "@/components/ui/Form";
+import { MultiSelect } from "@/components/ui/MultiSelect";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/Popover";
 import { Dispatch, SetStateAction } from "react";
 import { UseFormReturn } from "react-hook-form";
 

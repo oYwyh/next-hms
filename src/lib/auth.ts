@@ -29,6 +29,7 @@ export const lucia = new Lucia(adapter, {
       nationalId: attributes.nationalId,
       age: attributes.age,
       gender: attributes.gender,
+      picture: attributes.picture,
       role: attributes.role,
     };
   },
@@ -88,6 +89,7 @@ interface DatabaseUserAttributes {
   nationalId: string;
   age: string;
   gender: 'male' | 'female';
+  picture: string;
   role: string;
   admin?: {
     id: string | number;

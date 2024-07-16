@@ -15,10 +15,10 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-} from "@/components/ui/dialog";
+} from "@/components/ui/Dialog";
 import { add } from "@/app/(dashboard)/_actions/operations.action";
 import ManageForm from "./ManageForm";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 
 type HourTypes = { day: string; value: string };
 

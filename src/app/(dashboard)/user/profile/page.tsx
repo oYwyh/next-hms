@@ -3,16 +3,19 @@ import FormUpdatePassword from "@/app/(dashboard)/_components/FormUpdatePassword
 import { useGetUser } from "@/hooks/userHooks";
 import { User } from "@/lib/types";
 import FormUpdatePersonal from "../../_components/FormUpdatePersonal";
+import { UpdateProfilePicture } from "../../_components/UpdateProfilePicture";
+import { validateRequest } from "@/lib/auth";
 
 export default async function ProfilePage() {
-  const userUser = await useGetUser();
-
-  const user = userUser as User
+  const { user } = await validateRequest();
 
   return (
     <>
       {user && user.id && user.firstname && user.lastname && user.phone && user.nationalId && user.age && user.gender ? (
-        <>
+        <div className="flex flex-col gap-4 justify-center items-center h-[100vh]">
+          <UpdateProfilePicture
+            user={user}
+          />
           <FormUpdateProfile
             id={user.id}
             username={user.username}
@@ -30,7 +33,7 @@ export default async function ProfilePage() {
           <FormUpdatePassword
             id={user.id}
           />
-        </>
+        </div>
       ) : (
         <p>Loading...</p>
       )}

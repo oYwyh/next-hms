@@ -1,6 +1,6 @@
 'use client'
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import FormField from "@/components/ui/custom/FormField";
 import Hours from "@/components/ui/custom/Hours";
 import {
@@ -11,9 +11,9 @@ import {
     DialogDescription,
     DialogFooter,
     DialogHeader,
-} from "@/components/ui/dialog";
-import { FormMessage } from "@/components/ui/form";
-import { MultiSelect } from "@/components/ui/multi-select";
+} from "@/components/ui/Dialog";
+import { FormMessage } from "@/components/ui/Form";
+import { MultiSelect } from "@/components/ui/MultiSelect";
 import { Popover, PopoverContent, PopoverTrigger } from "@radix-ui/react-popover";
 import { Badge } from "lucide-react";
 import { Form } from "react-hook-form";

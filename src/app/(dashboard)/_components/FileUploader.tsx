@@ -1,6 +1,6 @@
 'use client'
 
-import { deleteFiles, getSignUrl, removeFiles } from "@/lib/r2";
+import { deleteFile, deleteFiles, getSignUrl, removeFiles, uploaded } from "@/lib/r2";
 import { useEffect, useState, useCallback, Dispatch, SetStateAction, useRef } from "react";
 import Uppy, { UppyFile } from "@uppy/core";
 import Webcam from "@uppy/webcam";
@@ -22,18 +22,26 @@ export default function FileUploader(
         open,
         setOpen,
         folderId,
+        userId,
+        lastPic,
     }
         : {
             open: boolean,
             setOpen: Dispatch<SetStateAction<boolean>>
             folderId?: number,
+            userId?: string,
+            lastPic?: string,
         }) {
 
     const preparedFilesRef = useRef([]);
 
     const uppy = new Uppy({
         autoProceed: false,
-    }).use(Webcam).use(ImageEditor);
+    }).use(Webcam, {
+        modes: ['picture'],
+        mirror: false,
+        preferredImageMimeType: 'image/jpg',
+    }).use(ImageEditor);
 
     const computeSHA256 = async (file) => {
         const buffer = await file.arrayBuffer();
@@ -47,19 +55,32 @@ export default function FileUploader(
 
     uppy.use(AwsS3, {
         getUploadParameters: async (file: any) => {
+            console.log(file)
             if (!file || !file.data) throw new Error('No file found');
             try {
                 const checkSum = await computeSHA256(file.data);
-                const signedUrlResult = await getSignUrl(file.data.name, file.data.type, file.data.size, checkSum, folderId);
+                const signedUrlResult = await getSignUrl(
+                    file.source == 'Webcam' ? file.name : file.data.name,
+                    file.data.type,
+                    file.data.size,
+                    checkSum,
+                    folderId ? folderId : undefined,
+                    userId ? userId : undefined,
+                    lastPic ? lastPic : undefined
+                );
 
                 if (!signedUrlResult || !signedUrlResult.success) throw new Error('Failed to get sign url');
 
-                const { url, fileName, folderId: s3FolderId } = signedUrlResult.success;
+                // const { url, fileName, folderId: s3FolderId } = signedUrlResult.success;
+                // if (folderId != s3FolderId) throw new Error('Folder id does not match');
 
-                if (folderId != s3FolderId) throw new Error('Folder id does not match');
+                const { url, fileName } = signedUrlResult.success;
 
+                preparedFilesRef.current.push(fileName);
 
-                preparedFilesRef.current.push({ name: fileName, folderId: folderId });
+                if (lastPic) {
+                    deleteFile(lastPic, false, true)
+                }
 
                 return {
                     method: 'PUT',
@@ -75,27 +96,42 @@ export default function FileUploader(
             }
         }
     }).on('complete', async (result) => {
+        setOpen(false)
         if (folderId) {
-            console.log(`folderId: ${folderId}`)
+            await uploaded('/user/files')
             await queryClient.invalidateQueries({ queryKey: ['files', folderId] })
+        }
+        if (userId) {
+            await uploaded('/doctor/profile')
         }
     }).on('cancel-all', async () => {
         await deleteFiles(preparedFilesRef.current, true);
         if (folderId) {
             await queryClient.invalidateQueries({ queryKey: ['files', folderId] })
         }
-    })
+        if (userId) {
+            await uploaded('/doctor/profile')
+        }
+    }).on('file-added', (file) => {
+        if (userId) {
+            if (uppy.getFiles().length > 1) {
+                uppy.removeFile(file.id);
+            }
+        }
+    });
 
     return (
         <>
             <DashboardModal
                 id="dashboard"
+                closeAfterFinish={true}
                 closeModalOnClickOutside={true}
                 open={open}
                 uppy={uppy}
                 proudlyDisplayPoweredByUppy={false}
                 showProgressDetails={true}
                 theme="dark"
+
             />
         </>
     );

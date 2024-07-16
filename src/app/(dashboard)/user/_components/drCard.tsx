@@ -3,11 +3,12 @@
 import Image from "next/image";
 import Img from '../../../../../public/dr.jpg'
 import { Star, StarHalf, Stethoscope, Wallet } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { book } from "../user.actions";
 import { useRouter } from 'next/navigation'
 import { useContext } from "react";
 import { AppointmentContext } from "../context";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
 
 export default function DoctorCard({ doctor, userId }: { doctor: any, userId: string }) {
     const router = useRouter()
@@ -54,7 +55,10 @@ export default function DoctorCard({ doctor, userId }: { doctor: any, userId: st
     return (
         <div className="bg-white flex-row flex gap-8 py-5 px-5">
             <div>
-                <Image src={Img} alt="doctor" className="rounded-full border-solid border-black border-2" width={100} height={100} />
+                <Avatar className="w-[100px] h-[100px] rounded-full border-solid border-black border-1">
+                    <AvatarImage src={`${process.env.NEXT_PUBLIC_R2_FILES_URL}/${doctor.user.picture}`} />
+                    <AvatarFallback>CN</AvatarFallback>
+                </Avatar>
             </div>
             <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">

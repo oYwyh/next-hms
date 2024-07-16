@@ -1,8 +1,8 @@
 import { TpasswordSchema } from "@/app/(dashboard)/types";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import FormField from "@/components/ui/custom/FormField";
-import { DialogFooter } from "@/components/ui/dialog";
-import { Form, FormMessage } from "@/components/ui/form";
+import { DialogFooter } from "@/components/ui/Dialog";
+import { Form, FormMessage } from "@/components/ui/Form";
 import { TbaseSchema } from "@/lib/types";
 import { UseFormReturn } from "react-hook-form";
 

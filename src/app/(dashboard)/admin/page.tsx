@@ -1,5 +1,5 @@
 import { logout } from "@/actions/auth/auth.action";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { useGetUser } from "@/hooks/userHooks";
 import { validateRequest } from "@/lib/auth";
 import Link from "next/link";
@@ -23,6 +23,9 @@ export default async function AdminPage() {
           </Button>
           <Button>
             <Link href="/admin/manage/users">Manage Users</Link>
+          </Button>
+          <Button>
+            <Link href="/admin/manage/appointments">Manage Appointments</Link>
           </Button>
           <form action={logout}>
             <Button>Sign out</Button>

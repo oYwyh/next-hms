@@ -2,12 +2,12 @@
 
 import { Table } from "@tanstack/react-table"
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/Button"
+import { Input } from "@/components/ui/Input"
 import { DataTableViewOptions } from "@/components/ui/table/DataTableViewOptions"
 
-import { statuses } from "./data"
-import { DataTableFacetedFilter } from "./DataTableFacetedFilter"
+import { statuses } from "@/constants"
+import { DataTableFacetedFilter } from "@/components/ui/table/DataTableFacetedFilter"
 import { CirclePlus } from "lucide-react"
 
 interface DataTableToolbarProps<TData> {

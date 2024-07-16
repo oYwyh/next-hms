@@ -1,40 +1,10 @@
 "use client"
 
-import { ColumnDef } from "@tanstack/react-table"
-import { ArrowUpDown, MoreHorizontal } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { Checkbox } from "@/components/ui/Checkbox"
 import { DataTableColumnHeader } from "@/components/ui/table/DataTableColumnHeader"
-import Edit from "@/app/(dashboard)/admin/manage/_components/edit"
-import Delete from "@/app/(dashboard)/admin/manage/_components/delete"
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
 import * as XLSX from 'xlsx'
-import { Dialog, DialogContent, DialogTrigger, DialogFooter, DialogHeader, DialogTitle } from "../dialog"
-import { Label } from "@radix-ui/react-label"
-import { Input } from "../input"
-import { ChangeEvent, useState } from "react"
-import { useForm } from "react-hook-form"
-import { Form } from "../form"
-import FormField from "../custom/FormField"
-import SwitchInput from "../custom/SwitchInput"
-import Name, { TnameSchema } from "../custom/Name"
+import SwitchInput from "@/components/ui/custom/SwitchInput"
+import Name, { TnameSchema } from "@/components/ui/custom/Name"
 
 export type BaseColumnsTypes = {
   id: string | number;

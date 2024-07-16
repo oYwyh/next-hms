@@ -2,8 +2,8 @@
 
 import FormField from "@/components/ui/custom/FormField";
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Button } from "@/components/ui/button";
-import { Form, FormMessage } from "@/components/ui/form";
+import { Button } from "@/components/ui/Button";
+import { Form, FormMessage } from "@/components/ui/Form";
 import { useForm } from "react-hook-form";
 import { TupdateProfileSchema, updateProfileSchema } from "@/app/(dashboard)/types";
 import { useState } from "react";
@@ -51,14 +51,18 @@ export default function FormUpdateProfile({
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <FormField form={form} name="id" type={'hidden'} />
-        <FormField form={form} name="username" />
-        <FormField form={form} name="email" />
-        <Button type="submit">Update</Button>
-        <FormMessage>{error}</FormMessage>
-      </form>
-    </Form>
+    <div>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <FormField form={form} name="id" type={'hidden'} />
+          <div className="flex flex-row gap-3 pb-2">
+            <FormField form={form} name="username" />
+            <FormField form={form} name="email" />
+          </div>
+          <Button className="w-[100%]" type="submit">Update</Button>
+          <FormMessage>{error}</FormMessage>
+        </form>
+      </Form>
+    </div>
   );
 }

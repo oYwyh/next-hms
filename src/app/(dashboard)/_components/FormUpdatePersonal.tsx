@@ -2,8 +2,8 @@
 
 import FormField from "@/components/ui/custom/FormField";
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Button } from "@/components/ui/button";
-import { Form, FormMessage } from "@/components/ui/form";
+import { Button } from "@/components/ui/Button";
+import { Form, FormMessage } from "@/components/ui/Form";
 import { useForm } from "react-hook-form";
 import { TupdatePersonalSchema, updatePersonalSchema } from "@/app/(dashboard)/types";
 import { useEffect, useState } from "react";
@@ -122,13 +122,19 @@ export default function FormUpdatePersonal({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <FormField form={form} name="id" type={'hidden'} />
-        <FormField form={form} name="firstname" />
-        <FormField form={form} name="lastname" />
-        <FormField form={form} name="phone" />
-        <FormField form={form} name="nationalId" />
-        <FormField form={form} name="age" />
-        <FormField form={form} name="gender" />
-        <Button type="submit">Update</Button>
+        <div className="flex flex-row gap-3">
+          <FormField form={form} name="firstname" />
+          <FormField form={form} name="lastname" />
+        </div>
+        <div className="flex flex-row gap-3">
+          <FormField form={form} name="phone" />
+          <FormField form={form} name="nationalId" />
+        </div>
+        <div className="flex flex-row gap-3 pb-2">
+          <FormField form={form} name="age" />
+          <FormField form={form} name="gender" />
+        </div>
+        <Button className="w-[100%]" type="submit">Update</Button>
         <FormMessage>{error}</FormMessage>
       </form>
     </Form>

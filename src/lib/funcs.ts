@@ -3,6 +3,7 @@ import { TuniqueColumnsSchema } from "@/app/(dashboard)/types";
 import { columnsRegex } from "@/app/auth/types";
 
 export const uniqueColumnsValidations = async (data: TuniqueColumnsSchema) => {
+  console.log(data)
   const columns = [
     data.username && { column: 'username', value: data?.username, regex: columnsRegex.username },
     data.email && { column: 'email', value: data?.email, regex: columnsRegex.email },

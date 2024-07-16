@@ -3,7 +3,7 @@
 import { daysList } from "@/lib/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Form, FormMessage } from "@/components/ui/form";
+import { Form, FormMessage } from "@/components/ui/Form";
 import FormField from "@/components/ui/custom/FormField";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import {
@@ -14,16 +14,16 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-} from "@/components/ui/dialog";
+} from "@/components/ui/Dialog";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs"
 
 import { TeditSchema, TpasswordSchema, editSchema, passwordSchema } from "@/app/(dashboard)/types";
 
 import { edit, editPassword } from "@/app/(dashboard)/_actions/operations.action";
 import ManageForm from "./ManageForm";
 import ManagePassword from "./ManagePassword";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { usePathname } from "next/navigation";
 
 type THours = { day: string; value: string };

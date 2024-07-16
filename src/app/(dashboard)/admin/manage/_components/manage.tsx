@@ -1,4 +1,4 @@
-import { DataTable } from "@/components/ui/table/DataTable";
+import { DataTable } from "@/components/ui/table/data-table";
 import { DoctorColumnsTypes, UserColumnsTypes, DoctorTableColumns, UserTableColumns, AdminTableColumns, DoctorTableColumnsWithPrivileges, UserTableColumnsWithPrivileges, AdminTableColumnsWithPrivileges } from "./columns";
 import db from "@/lib/db";
 import AddPage from "./add";

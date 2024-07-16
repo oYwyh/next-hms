@@ -1,11 +1,11 @@
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/Input";
 import {
   FormControl,
   FormField as CFormField,
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from "@/components/ui/Form";
 import { Check, ChevronsUpDown } from "lucide-react"
 import { Control, useController } from "react-hook-form";
 import {
@@ -16,26 +16,26 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-
+} from "@/components/ui/Select"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/Button"
 import {
   Command,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
-} from "@/components/ui/command"
+} from "@/components/ui/Command"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
-import { toast } from "@/components/ui/use-toast"
-import { Switch } from "../switch";
+} from "@/components/ui/Popover"
+import { toast } from "@/components/ui/useToast"
+import { Switch } from "@/components/ui/Switch";
 import { Dispatch, SetStateAction } from "react";
-import { Textarea } from "../textarea";
+import { Textarea } from "@/components/ui/Textarea";
+import { Rating } from "react-simple-star-rating";
 
 
 interface FormFieldProps {
@@ -54,6 +54,8 @@ interface FormFieldProps {
   setState?: any,
   isTextarea?: boolean,
   placeholder?: string,
+  rating?: boolean,
+  handleRating?: (rate: number) => void
 }
 
 const specialties = [
@@ -78,6 +80,8 @@ export default function FormField({
   setState,
   isTextarea,
   placeholder,
+  rating,
+  handleRating
 }: FormFieldProps) {
   const {
     field,
@@ -93,11 +97,11 @@ export default function FormField({
       <CFormField
         control={form.control}
         name={name}
-        render={() => (
+        render={({ field: { onChange } }) => (
           <FormItem
             className="w-full"
           >
-            {type != 'hidden' && !isTextarea && !select && !switchValue && (
+            {type != 'hidden' && !isTextarea && !select && !switchValue && !rating && (
               <>
                 <FormLabel>
                   {name.charAt(0).toUpperCase() + name.slice(1)}
@@ -270,6 +274,17 @@ export default function FormField({
                 }}
                 aria-readonly
               />
+            )}
+            {rating == true && (
+              <div className="flex flex-row justify-center">
+                <Rating
+                  onClick={onChange}
+                  SVGclassName='inline-block'
+                  allowFraction
+                  transition
+                />
+                <FormMessage>{fieldError?.message}</FormMessage>
+              </div>
             )}
           </FormItem>
         )}

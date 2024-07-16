@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/Button"
 import {
     Dialog,
     DialogContent,
@@ -7,15 +7,15 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/Dialog"
+import { Input } from "@/components/ui/Input"
+import { Label } from "@/components/ui/Lable"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ChangeEvent, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { Form } from "../form"
-import FormField from "./FormField"
+import { Form } from "@/components/ui/Form"
+import FormField from "@/components/ui/custom/FormField"
 
 type TName = {
     handleClick: (data: TnameSchema) => void

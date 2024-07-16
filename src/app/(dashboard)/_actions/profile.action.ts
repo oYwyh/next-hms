@@ -1,7 +1,7 @@
 'use server'
 
 import db from "@/lib/db";
-import { TpasswordSchema, TupdatePasswordSchema, TupdatePersonalSchema, TupdateProfileSchema } from "../types"
+import { TpasswordSchema, TupdatePersonalSchema, TupdateProfileSchema } from "../types"
 import { doctorTable, userTable, workDaysTable } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { hash } from "@node-rs/argon2";
@@ -17,6 +17,16 @@ export const updateProfile = async (data: TupdateProfileSchema) => {
     }
 
     // Check if the email exists and belongs to a different user
+    const usernameExists = await db.query.userTable.findFirst({
+        columns: {
+            username: true,
+        },
+        where: (userTable, { eq, and, not }) => and(
+            eq(userTable.username, username),
+            not(eq(userTable.id, id))
+        ),
+    });
+
     const emailExists = await db.query.userTable.findFirst({
         columns: {
             email: true,
@@ -27,6 +37,11 @@ export const updateProfile = async (data: TupdateProfileSchema) => {
         ),
     });
 
+    if (usernameExists) {
+        return {
+            exists: 'Username Exists',
+        };
+    }
     if (emailExists) {
         return {
             exists: 'Email Exists',

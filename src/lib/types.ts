@@ -11,6 +11,7 @@ export type User = {
   nationalId: string;
   age: string;
   gender: 'male' | 'female';
+  picture: string;
   role: "admin" | "user" | "doctor";
 };
 
@@ -29,6 +30,9 @@ export type AdminUser = User & {
     user_id: string;
   };
 };
+
+
+
 
 export const daysList = [
   { value: "sunday", label: "Sunday" },

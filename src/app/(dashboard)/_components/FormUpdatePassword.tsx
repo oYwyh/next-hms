@@ -1,8 +1,8 @@
 "use client";
 
 import FormField from "@/components/ui/custom/FormField";
-import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
+import { Button } from "@/components/ui/Button";
+import { Form } from "@/components/ui/Form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { updatePassword } from "../_actions/profile.action";
@@ -38,18 +38,20 @@ export default function FormUpdateProfile({ id }: FormUpdatePasswordTypes) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <FormField form={form} name="id" type={'hidden'} />
-        {empty ? (
-          <>
-            <FormField form={form} name="password" />
-            <FormField form={form} name="confirmPassword" />
-          </>
-        ): (
-          <>
-            <FormField form={form} name="password" />
-            <FormField form={form} name="confirmPassword" />
-          </>
-        )}
-        <Button type="submit">Update</Button>
+        <div className="flex flex-row gap-3 pb-2">
+          {empty ? (
+            <>
+              <FormField form={form} name="password" />
+              <FormField form={form} name="confirmPassword" />
+            </>
+          ) : (
+            <>
+              <FormField form={form} name="password" />
+              <FormField form={form} name="confirmPassword" />
+            </>
+          )}
+        </div>
+        <Button className="w-[100%]" type="submit">Update</Button>
       </form>
     </Form>
   );

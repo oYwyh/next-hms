@@ -1,17 +1,17 @@
 'use client'
 
 import FormField from "@/components/ui/custom/FormField";
-import { Form, FormMessage } from "@/components/ui/form";
+import { Form, FormMessage } from "@/components/ui/Form";
 import { useForm } from "react-hook-form";
 import { diagnosisSchema, TdiagnosisSchema } from "../doctor/appointments/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
-import { MultiSelect } from "@/components/ui/multi-select";
+import { Button } from "@/components/ui/Button";
+import { MultiSelect } from "@/components/ui/MultiSelect";
 import { useEffect, useState } from "react";
 import { createReservation } from "../doctor/doctor.actions";
 import { useRouter } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/Badge";
+import { Label } from "@/components/ui/Lable";
 
 const laboratoryList = [
     { value: "laboratory1", label: "Laboratory 1" },

@@ -11,17 +11,17 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
     AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/AlertDialog"
 
 import Name, { TnameSchema } from "@/components/ui/custom/Name";
 import { ChangeEvent, useState } from "react";
 import { createFolder, deleteFolder } from "../user.actions";
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/Button"
+import { Input } from "@/components/ui/Input"
+import { Label } from "@/components/ui/Lable"
 import { useRouter } from "next/navigation";
 import { Delete, Trash, Trash2 } from "lucide-react";
-import { Toggle } from "@/components/ui/toggle";
+import { Toggle } from "@/components/ui/Toggle";
 
 type Ttest = {
     folders: { id: number; name: string; userId: string; files: { id: number; name: string; folderId: number; }[]; }[]
@@ -78,6 +78,7 @@ export default function Test({ folders, userId }: Ttest) {
                                             bg-white
                                             w-fill
                                             shadow-[0_3px_10px_rgb(0,0,0,0.2)]
+                                            rounded-sm
                                         "
                                     >
                                         <div

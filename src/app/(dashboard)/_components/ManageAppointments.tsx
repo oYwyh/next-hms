@@ -1,4 +1,4 @@
-import { DataTable } from "@/components/ui/table/DataTable";
+import { DataTable } from "@/components/ui/table/data-table";
 import db from "@/lib/db";
 import { useGetUser } from "@/hooks/userHooks";
 import { appointmentTable } from "@/lib/db/schema";
@@ -9,7 +9,9 @@ async function getData() {
     const user = await useGetUser();
 
     const appointments = await db.query.appointmentTable.findMany({
-        where: sql`${user?.role == 'user' ? appointmentTable.user_id : appointmentTable.doctor_id} = ${user?.id}`,
+        where: user?.role === 'admin'
+            ? sql`TRUE` // This will fetch all appointments
+            : sql`${user?.role == 'user' ? appointmentTable.user_id : appointmentTable.doctor_id} = ${user?.id}`,
         with: {
             user: {
                 columns: {

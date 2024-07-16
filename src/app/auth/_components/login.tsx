@@ -4,9 +4,9 @@ import { InsertedCredit, TloginSchema, loginSchema } from "@/app/auth/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { login } from "@/actions/auth/auth.action";
-import { Form } from "@/components/ui/form";
+import { Form } from "@/components/ui/Form";
 import FormField from "@/components/ui/custom/FormField";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 
 export default function Login({ insertedCredit }: { insertedCredit: InsertedCredit }) {
   const form = useForm<TloginSchema>({

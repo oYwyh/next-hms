@@ -1,10 +1,7 @@
 import { useForm } from "react-hook-form"
-import FormField from "./FormField"
-import { Button } from "../button"
-import { Form } from "../form"
-import db from "@/lib/db"
-import { adminTable } from "@/lib/db/schema"
-import { sql } from "drizzle-orm"
+import FormField from "@/components/ui/custom/FormField"
+import { Button } from "@/components/ui/Button"
+import { Form } from "@/components/ui/Form"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -15,7 +12,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
     AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/AlertDialog"
 import { toggleSuper } from "@/app/(dashboard)/_actions/operations.action"
 import { useState } from "react"
 

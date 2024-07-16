@@ -1,8 +1,8 @@
 'use client'
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs"
 import FileUploader from "@/app/(dashboard)/_components/FileUploader";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import Pdf from "@/components/ui/custom/Pdf";
 import { deleteFile } from "@/lib/r2";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -47,8 +47,11 @@ export default function FilesPage({ params: { folderId } }: { params: { folderId
                             <TabsContent value="images">
                                 <div className="grid grid-cols-6 gap-5 w-fit">
                                     <PhotoProvider
-                                        toolbarRender={({ onScale, scale, onRotate, rotate, index }) => {
-                                            const activeFile = files[index]
+                                        toolbarRender={({ onScale, scale, onRotate, rotate, index, visible }) => {
+                                            const activeFile = files[index];
+                                            if (!activeFile) {
+                                                return null; // or some fallback UI
+                                            }
                                             return (
                                                 <div className="flex flex-row gap-5">
                                                     <Trash2 className="cursor-pointer" color='red' onClick={async () => {
@@ -87,7 +90,6 @@ export default function FilesPage({ params: { folderId } }: { params: { folderId
                             <TabsContent value="pdfs">
                                 <div className="grid grid-cols-2 ">
                                     {files.map((file: any, index: number) => {
-                                        console.log(index)
                                         const fileExtension = file.name.split('.').pop().toLowerCase();
                                         if (['pdf'].includes(fileExtension)) {
                                             return (

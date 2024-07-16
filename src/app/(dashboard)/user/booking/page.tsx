@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import FormField from "@/components/ui/custom/FormField";
-import { Form } from "@/components/ui/form";
+import { Form } from "@/components/ui/Form";
 import { useForm } from "react-hook-form";
 import DoctorCard from '../_components/drCard';
 import { useQuery, useQueryClient } from '@tanstack/react-query';

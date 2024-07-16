@@ -2,7 +2,8 @@
 
 import { TnameSchema } from "@/components/ui/custom/Name";
 import db from "@/lib/db"
-import { appointmentTable, userMedicalFoldersTable, userTable } from "@/lib/db/schema";
+import { appointmentTable, reviewTable, userMedicalFilesTable, userMedicalFoldersTable, userTable } from "@/lib/db/schema";
+import { deleteFiles } from "@/lib/r2";
 import { sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
@@ -103,14 +104,51 @@ export async function createFolder(
 export async function deleteFolder(
     folderId: number
 ) {
+    const files = await db.select().from(userMedicalFilesTable).where(
+        sql`${userMedicalFilesTable.folderId} = ${folderId}`
+    );
+
+    const filesToDelete = files.map((file) => {
+        return file.name;
+    });
+
+    if (filesToDelete.length > 0) {
+        console.log('filesToDelete', filesToDelete);
+        await deleteFiles(filesToDelete, true);
+    }
+
     const folder = await db.delete(userMedicalFoldersTable).where(
         sql`${userMedicalFoldersTable.id} = ${folderId}`
-    )
+    );
 
-    if (folder) {
-        revalidatePath('/user/files')
+    if (folder || filesToDelete.length > 0) {
+        revalidatePath('/user/files');
         return {
             deleted: true
-        }
+        };
     }
+
+    return {
+        deleted: false
+    };
+}
+
+export async function postReview(
+    data: any,
+    userId: string,
+    appointmentId: number,
+    doctorId: string
+) {
+    console.log(userId, appointmentId, doctorId, data)
+    const review = await db.insert(reviewTable).values({
+        userId: userId,
+        appointmentId: Number(appointmentId),
+        doctorId: doctorId,
+        rating: data.rating,
+        review: data.review
+    })
+
+    revalidatePath('/user/appointments')
+
+    return review
 }

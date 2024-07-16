@@ -1,13 +1,13 @@
 "use client"
 
 import { ColumnDef, Row } from "@tanstack/react-table"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/Button"
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/DropdownMenu"
 import { DataTableColumnHeader } from "@/components/ui/table/DataTableColumnHeader"
 import Actions from "@/app/(dashboard)/admin/manage/_components/Actions"
 import { baseColumns, BaseColumnsTypes, SwitchTableColumn, SelectTableColumn, ExportTableColumn } from "@/components/ui/table/Columns"

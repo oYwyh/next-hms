@@ -3,10 +3,10 @@
 import { InsertedCredit, TregisterSchema, registerSchema } from "@/app/auth/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 import { register } from "@/actions/auth/auth.action";
-import { Form, FormMessage } from "@/components/ui/form";
+import { Form, FormMessage } from "@/components/ui/Form";
 import FormField from "@/components/ui/custom/FormField";
 import { useState } from "react";
 

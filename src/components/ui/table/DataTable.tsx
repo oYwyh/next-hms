@@ -23,12 +23,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/Table"
 
-import { Input } from "@/components/ui/input"
-import { DataTablePagination } from "./DataTablePagination"
-import { DataTableViewOptions } from "./DataTableViewOptions"
-import { DataTableToolbar } from "./DataTableToolbar"
+import { Input } from "@/components/ui/Input"
+import { DataTableToolbar } from "@/components/ui/table/DataTableToolbar"
+import { DataTableViewOptions } from "@/components/ui/table/DataTableViewOptions"
+import { DataTablePagination } from "@/components/ui/table/DataTablePagination"
 
 
 interface DataTableProps<TData, TValue> {

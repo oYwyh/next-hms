@@ -1,4 +1,4 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs"
 import { validateRequest } from "@/lib/auth"
 import db from "@/lib/db"
 import { appointmentTable, userMedicalFilesTable, userMedicalFoldersTable, userTable } from "@/lib/db/schema"
@@ -27,12 +27,16 @@ const getInfo = async (appointmentId: string | number) => {
     if (info == null) throw new Error('Failed to get appointment info');
     if (info.status === 'completed') return redirect('/doctor/appointments')
 
-    const patient = await db.select().from(userTable).where(sql`${userTable.id} = ${info?.user_id}`)
+    const patient = await db.query.userTable.findFirst({
+        where: sql`${userTable.id} = ${info?.user_id}`
+    })
 
-    const folders = await db.select().from(userMedicalFoldersTable).where(sql`${userMedicalFoldersTable.userId} = ${info?.user_id}`)
-
-    const files = await db.select().from(userMedicalFilesTable).where(sql`${userMedicalFilesTable.folderId} = ${folders[0].id}`)
-
+    const folders = await db.query.userMedicalFoldersTable.findMany({
+        with: {
+            files: true
+        },
+        where: sql`${userMedicalFoldersTable.userId} = ${info?.user_id}`,
+    })
 
     const doctor = await db.query.userTable.findFirst({
         where: sql`${userTable.id} = ${info?.doctor_id}`
@@ -65,7 +69,6 @@ const getInfo = async (appointmentId: string | number) => {
     return {
         patient,
         folders,
-        files,
         doctor,
         reservation: info.reservation,
         prescription: info.reservation?.prescription
@@ -80,12 +83,12 @@ export default async function StartPage({ params: { appointmentId } }: { params:
     if (!info) throw new Error('Failed to get appointment info');
 
     return (
-        <Tabs defaultValue="diagnosis" className="w-[100%]">
+        <Tabs defaultValue="info" className="w-[100%]">
             <TabsList className="w-[100%]">
                 <TabsTrigger className="w-[100%]" value="info">Patient Info</TabsTrigger>
                 <TabsTrigger className="w-[100%]" value="diagnosis">Diagnosis</TabsTrigger>
             </TabsList>
-            <TabsContent value="info"><PatientInfo patient={info.patient} folders={info.z .01folders} files={info.z .01files} /></TabsContent>
+            <TabsContent value="info"><PatientInfo patient={info.patient} folders={info.folders} /></TabsContent>
             <TabsContent value="diagnosis"><Diagnosis appointmentId={appointmentId} view={false} /></TabsContent>
         </Tabs>
     )

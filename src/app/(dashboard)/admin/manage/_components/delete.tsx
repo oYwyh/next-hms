@@ -1,7 +1,7 @@
 'use client'
 
 import { deleteUser } from "@/app/(dashboard)/_actions/operations.action";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import {
     AlertDialog,
     AlertDialogCancel,
@@ -11,14 +11,14 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
     AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/AlertDialog"
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/DropdownMenu"
 import { Dispatch, SetStateAction, useState } from "react";
 export default function Delete({ id, setPopOpen }: { id: string | number, setPopOpen: Dispatch<SetStateAction<boolean | undefined>>; }) {
 
