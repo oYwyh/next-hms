@@ -4,7 +4,7 @@ import "./globals.css";
 import { Toaster } from "react-hot-toast";
 
 import { cn } from "@/lib/utils";
-import { ReactQueryProvider } from "./ClientStuffProvider";
+import { ClientStuffProvider } from "./ClientStuffProvider";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -31,7 +31,10 @@ export default function RootLayout({
         style={{ background: "#343A40" }}
       >
         <Toaster />
-        {children}
+        <ClientStuffProvider>
+          {children}
+        </ClientStuffProvider>
+
       </body>
     </html>
   );

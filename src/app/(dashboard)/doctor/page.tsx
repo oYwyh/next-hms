@@ -1,7 +1,6 @@
-import { logout } from "@/actions/auth/auth.action";
+import { logout } from "@/actions/auth/auth.actions";
 import { Button } from "@/components/ui/Button";
-import { useGetUser } from "@/hooks/userHooks";
-import { validateRequest } from "@/lib/auth";
+import { useGetUser } from "@/hooks/useGetUser";
 import Link from "next/link";
 
 export default async function DoctorPage() {
@@ -12,7 +11,7 @@ export default async function DoctorPage() {
       <div className="felx flex-col gap-5">
         <pre className="user-json">{JSON.stringify(user, null, 2)}</pre>
         <div className="flex flex-row gap-3">
-          <Link href="/doctor/profile">
+          <Link href="/profile">
             <Button>
               Doctor Profile
             </Button>

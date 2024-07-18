@@ -1,6 +1,6 @@
-import { logout } from "@/actions/auth/auth.action";
+import { logout } from "@/actions/auth/auth.actions";
 import { Button } from "@/components/ui/Button";
-import { useGetUser } from "@/hooks/userHooks";
+import { useGetUser } from "@/hooks/useGetUser";
 import { validateRequest } from "@/lib/auth";
 import Link from "next/link";
 
@@ -13,7 +13,7 @@ export default async function AdminPage() {
         <pre className="user-json">{JSON.stringify(user, null, 2)}</pre>
         <div className="flex flex-row gap-3">
           <Button>
-            <Link href="/admin/profile">Admin Profile</Link>
+            <Link href="/profile">Admin Profile</Link>
           </Button>
           <Button>
             <Link href="/admin/manage/admins">Manage Admins</Link>

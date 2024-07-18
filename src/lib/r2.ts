@@ -126,7 +126,7 @@ export async function deleteFiles(names: string[], s3: boolean = false) {
     }
 }
 
-export async function deleteFile(name: string, file: boolean = true, s3: boolean = false) {
+export async function deleteFile(name: string, medical: boolean = true, s3: boolean = false) {
     const { user } = await validateRequest()
     if (!user) throw new Error('Unauthorized')
 
@@ -145,7 +145,7 @@ export async function deleteFile(name: string, file: boolean = true, s3: boolean
     }
 
     try {
-        if (file) {
+        if (medical) {
             await db.delete(userMedicalFilesTable).where(sql`${userMedicalFilesTable.name} = ${name}`);
         }
     } catch (error) {

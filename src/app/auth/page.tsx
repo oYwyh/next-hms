@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import { InsertedCredit, TcheckSchema, checkSchema } from "@/app/auth/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { checkCredit } from "@/actions/auth/auth.action";
+import { checkCredit } from "@/actions/auth/auth.actions";
 import { useState } from "react";
 import Login from "./_components/login";
 import Register from "./_components/register";

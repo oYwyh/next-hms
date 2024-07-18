@@ -14,7 +14,7 @@ export async function GET(request: Request) {
             doctorRecords = await db
                 .select()
                 .from(userTable)
-                .leftJoin(doctorTable, eq(doctorTable.user_id, userTable.id))
+                .leftJoin(doctorTable, eq(doctorTable.userId, userTable.id))
                 .leftJoin(workDaysTable, eq(workDaysTable.doctorId, doctorTable.id))
                 .leftJoin(workHoursTable, eq(workHoursTable.workDayId, workDaysTable.id))
                 .where(eq(userTable.role, 'doctor'));
@@ -22,7 +22,7 @@ export async function GET(request: Request) {
             doctorRecords = await db
                 .select()
                 .from(userTable)
-                .leftJoin(doctorTable, eq(doctorTable.user_id, userTable.id))
+                .leftJoin(doctorTable, eq(doctorTable.userId, userTable.id))
                 .leftJoin(workDaysTable, eq(workDaysTable.doctorId, doctorTable.id))
                 .leftJoin(workHoursTable, eq(workHoursTable.workDayId, workDaysTable.id))
                 .where(and(
@@ -34,7 +34,7 @@ export async function GET(request: Request) {
         doctorRecords = await db
             .select()
             .from(userTable)
-            .leftJoin(doctorTable, eq(doctorTable.user_id, userTable.id))
+            .leftJoin(doctorTable, eq(doctorTable.userId, userTable.id))
             .leftJoin(workDaysTable, eq(workDaysTable.doctorId, doctorTable.id))
             .leftJoin(workHoursTable, eq(workHoursTable.workDayId, workDaysTable.id))
             .where(and(
@@ -43,26 +43,26 @@ export async function GET(request: Request) {
             ));
     }
 
-    // Process the results to aggregate work_hours for each work_day
-    const doctors = doctorRecords.reduce((acc, record) => {
+    // Process the results to aggregate workHours for each work_day
+    const doctors = doctorRecords.reduce((acc: any, record: any) => {
         const userId = record.user.id;
 
         if (!acc[userId]) {
             acc[userId] = {
                 user: record.user,
                 doctor: record.doctor,
-                work_days: []
+                workDays: []
             };
         }
 
-        const workDayIndex = acc[userId].work_days.findIndex(day => day.id === record.work_days.id);
+        const workDayIndex = acc[userId].workDays.findIndex((day: any) => day.id === record.workDays.id);
         if (workDayIndex === -1) {
-            acc[userId].work_days.push({
-                ...record.work_days,
-                work_hours: [{ ...record.work_hours }]
+            acc[userId].workDays.push({
+                ...record.workDays,
+                workHours: [{ ...record.workHours }]
             });
         } else {
-            acc[userId].work_days[workDayIndex].work_hours.push({ ...record.work_hours });
+            acc[userId].workDays[workDayIndex].workHours.push({ ...record.workHours });
         }
 
         return acc;
@@ -72,7 +72,6 @@ export async function GET(request: Request) {
     const result = Object.values(doctors);
 
     console.log(result);
-
 
     return NextResponse.json(result);
 }

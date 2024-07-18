@@ -1,4 +1,4 @@
-import { Many, relations } from "drizzle-orm";
+import { Column, Many, relations } from "drizzle-orm";
 import {
   serial,
   pgTable,
@@ -12,7 +12,22 @@ import {
   bigint,
   time,
   numeric,
+  PgTimestampBuilderInitial,
 } from "drizzle-orm/pg-core";
+
+export const timestamps = (): {
+  createdAt: PgTimestampBuilderInitial<"createdAt">;
+  updatedAt: PgTimestampBuilderInitial<"updatedAt">;
+} => ({
+  createdAt: timestamp("createdAt", {
+    withTimezone: true,
+    mode: "date",
+  }).defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt", {
+    withTimezone: true,
+    mode: "date",
+  }).defaultNow().notNull(),
+});
 
 export const UserRole = pgEnum("userRole", ["admin", "user", "doctor"]);
 
@@ -29,6 +44,7 @@ export const userTable = pgTable("user", {
   picture: text("picture").default('default.jpg').notNull(),
   password: text("password").notNull(),
   role: UserRole("userRole").default("user"),
+  ...timestamps(),
 });
 
 export const userRelations = relations(userTable, ({ one, many }) => ({
@@ -99,8 +115,8 @@ export const workDayRelations = relations(workDaysTable, ({ one, many }) => ({
 export const workHoursTable = pgTable('workHours', {
   id: serial('id').primaryKey().unique(),
   workDayId: integer('workDayId').notNull().references(() => workDaysTable.id, { onDelete: 'cascade', onUpdate: "cascade" }),
-  startAt: time('startAt').notNull(),
-  endAt: time('endAt').notNull(),
+  from: time('from').notNull(),
+  to: time('to').notNull(),
 });
 
 export const workHourRelations = relations(workHoursTable, ({ one }) => ({
@@ -118,8 +134,8 @@ export const Status = pgEnum("status", ["pending", "cancelled", "completed"]);
 export const appointmentTable = pgTable("appointment", {
   id: serial('id').primaryKey().unique(),
   date: text("date").notNull(),
-  from: text("from").notNull(),
-  to: text("to").notNull(),
+  from: time("from").notNull(),
+  to: time("to").notNull(),
   userId: text("userId")
     .references(() => userTable.id, {
       onDelete: "cascade",
@@ -133,6 +149,7 @@ export const appointmentTable = pgTable("appointment", {
     })
     .notNull(),
   status: Status("status").default("pending"),
+  ...timestamps(),
 });
 
 export const appointmentRelation = relations(appointmentTable, ({ one }) => ({
@@ -181,7 +198,7 @@ export const prescriptionTable = pgTable("prescription", {
   laboratory: text("laboratory").notNull(),
   radiology: text("radiology").notNull(),
   medicine: text("medicine").notNull(),
-  reservationId: integer("reservationId").notNull().references(() => appointmentTable.id, { onDelete: 'cascade', onUpdate: "cascade" }),
+  reservationId: integer("reservationId").notNull().references(() => reservationTable.id, { onDelete: 'cascade', onUpdate: "cascade" }),
 });
 
 export const prescriptionRelation = relations(prescriptionTable, ({ one }) => ({
@@ -196,14 +213,15 @@ export const reviewTable = pgTable("review", {
   appointmentId: integer("appointmentId")
     .notNull()
     .references(() => appointmentTable.id, { onDelete: 'cascade', onUpdate: "cascade" }),
-  doctorId: text("doctorId")
+  doctorId: integer("doctorId")
     .notNull()
-    .references(() => doctorTable.userId, { onDelete: 'cascade', onUpdate: "cascade" }),
+    .references(() => doctorTable.id, { onDelete: 'cascade', onUpdate: "cascade" }),
   userId: text("userId")
     .notNull()
     .references(() => userTable.id, { onDelete: 'cascade', onUpdate: "cascade" }),
   rating: numeric("rating").notNull(),
   review: text("review"),
+  ...timestamps(),
 });
 
 export const reviewRelations = relations(reviewTable, ({ one }) => ({
@@ -228,6 +246,7 @@ export const userMedicalFoldersTable = pgTable("userMedicalFolders", {
   id: serial('id').primaryKey().unique(),
   name: text("name").unique().notNull(),
   userId: text("userId").notNull().references(() => userTable.id, { onDelete: 'cascade', onUpdate: "cascade" }),
+  ...timestamps(),
 })
 
 export const userMedicalFoldersRelations = relations(userMedicalFoldersTable, ({ one, many }) => ({
@@ -241,7 +260,8 @@ export const userMedicalFoldersRelations = relations(userMedicalFoldersTable, ({
 export const userMedicalFilesTable = pgTable("userMedicalFiles", {
   id: serial('id').primaryKey().unique(),
   name: text("name").notNull(),
-  folderId: integer("folderId").notNull().references(() => userMedicalFoldersTable.id, { onDelete: 'cascade', onUpdate: "cascade" })
+  folderId: integer("folderId").notNull().references(() => userMedicalFoldersTable.id, { onDelete: 'cascade', onUpdate: "cascade" }),
+  ...timestamps(),
 })
 
 export const userMedicalFilesRelations = relations(userMedicalFilesTable, ({ one }) => ({

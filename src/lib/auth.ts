@@ -5,6 +5,7 @@ import { DrizzlePostgreSQLAdapter } from "@lucia-auth/adapter-drizzle";
 import { sessionTable, userTable } from "./db/schema";
 import { cache } from "react";
 import { cookies } from "next/headers";
+import { TUser } from "@/lib/types";
 
 const adapter = new DrizzlePostgreSQLAdapter(db, sessionTable, userTable); // your adapter
 
@@ -31,6 +32,8 @@ export const lucia = new Lucia(adapter, {
       gender: attributes.gender,
       picture: attributes.picture,
       role: attributes.role,
+      createdAt: attributes.createdAt,
+      updatedAt: attributes.updatedAt,
     };
   },
 });
@@ -91,9 +94,16 @@ interface DatabaseUserAttributes {
   gender: 'male' | 'female';
   picture: string;
   role: string;
+  createdAt: string;
+  updatedAt: string;
   admin?: {
     id: string | number;
     super: boolean;
+    user_id: string;
+  }
+  doctor?: {
+    id: string | number;
+    specialty: string;
     user_id: string;
   }
 }

@@ -1,7 +1,7 @@
-import { logout } from "@/actions/auth/auth.action";
+import { logout } from "@/actions/auth/auth.actions";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { useGetUser } from "@/hooks/userHooks";
+import { useGetUser } from "@/hooks/useGetUser";
 import Link from "next/link";
 
 export default async function Home() {
@@ -11,7 +11,7 @@ export default async function Home() {
     <>
       {!user ? (
         <Link href="/auth">
-          <Badge>auth</Badge>
+          <Button>auth</Button>
         </Link>
       ) : (
         <>

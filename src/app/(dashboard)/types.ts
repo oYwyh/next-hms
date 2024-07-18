@@ -1,9 +1,16 @@
 import { baseSchema } from "@/lib/types";
 import { z } from "zod";
 
+export const diagnosisSchema = z.object({
+    history: z.string().min(1, "History is required"),
+    diagnosis: z.string().min(1, "Diagnosis is required"),
+})
+
+export type TdiagnosisSchema = z.infer<typeof diagnosisSchema>
+
 export const updateProfileSchema = z.object({
     id: z.string().optional(),
-    username: z.string().min(1, "Username is required"),
+    username: z.string().min(1, "Username is required").refine(s => !s.includes(' '), 'No Spaces!'),
     email: z.string().email("Invalid email"),
 })
 
@@ -25,7 +32,7 @@ export const editSchema = baseSchema.omit({ password: true, confirmPassword: tru
     }
 });
 
-export type TeditSchema = z.infer<typeof editSchema>;
+export type TeditSchema = { [key: string]: string } & z.infer<typeof editSchema>;
 
 export const addSchema = baseSchema.extend({
     specialty: z.string().optional(),
@@ -44,7 +51,7 @@ export const addSchema = baseSchema.extend({
     }
 })
 
-export type TaddSchema = z.infer<typeof addSchema>;
+export type TaddSchema = { [key: string]: string } & z.infer<typeof addSchema>;
 
 export const passwordSchema = z.object({
     id: z.string().optional(),

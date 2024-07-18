@@ -13,7 +13,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/AlertDialog"
-import { toggleSuper } from "@/app/(dashboard)/_actions/operations.action"
+import { toggleSuper } from "@/app/(dashboard)/_actions/operations.actions"
 import { useState } from "react"
 
 export default function SwitchInput({ id, value }: { id: string | number | any, value: string | boolean }) {

@@ -11,7 +11,7 @@ export async function GET(request: Request, { params: { specialty } }: { params:
 
     const doctorsList = await db.select()
         .from(userTable)
-        .leftJoin(doctorTable, eq(doctorTable.user_id, userTable.id))
+        .leftJoin(doctorTable, eq(doctorTable.userId, userTable.id))
         .where(whereCondition);
 
     const fullNames = doctorsList.map(doctor => ({
@@ -19,7 +19,7 @@ export async function GET(request: Request, { params: { specialty } }: { params:
         value: `${doctor.user.username}`
     }));
 
-    fullNames.unshift({ label: 'All specialty', value: 'all' });
+    fullNames.unshift({ label: 'All doctors', value: 'all' });
 
     return NextResponse.json(fullNames);
 }

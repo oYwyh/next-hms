@@ -29,9 +29,8 @@ export function DataTableToolbar<TData>({
             options={statuses}
           />
         )}
-        {isFiltered && (
+        {table.getColumn("status") && isFiltered && (
           <Button
-            variant="ghost"
             onClick={() => table.resetColumnFilters()}
             className="h-8 px-2 lg:px-3"
           >

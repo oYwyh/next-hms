@@ -36,13 +36,15 @@ interface DataTableProps<TData, TValue> {
   data: TData[],
   hiddenColumns?: string[],
   restrictedColumns?: string[],
+  search?: string
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   hiddenColumns,
-  restrictedColumns
+  restrictedColumns,
+  search
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -84,11 +86,11 @@ export function DataTable<TData, TValue>({
       <div className="flex items-center justify-between py-4">
         <div className="flex items-center space-x-2">
           <Input
-            placeholder="Filter emails..."
-            value={table.getColumn("email")?.getFilterValue() as string}
-            onChange={(event) =>
-              table.getColumn("email")?.setFilterValue(event.target.value)
-            }
+            placeholder={`Search ${search ? search : "email"}`}
+            value={search ? table.getColumn(search)?.getFilterValue() as string : table.getColumn('email')?.getFilterValue() as string}
+            onChange={(event) => {
+              search ? table.getColumn(search)?.setFilterValue(event.target.value) : table.getColumn("email")?.setFilterValue(event.target.value)
+            }}
             className="max-w-sm"
           />
           <DataTableToolbar table={table} />

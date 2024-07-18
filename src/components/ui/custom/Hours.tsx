@@ -1,7 +1,7 @@
 import { Command, Plus, Trash2 } from "lucide-react";
 import React, { useEffect } from "react";
-import { TimePicker } from "@components/ui/custom/TimePicker";
 import { Button } from "@/components/ui/Button";
+import { TimePicker } from "@/components/ui/custom/TimePicker";
 
 type HoursType = {
   selectedHours: { day: string; value: string }[];

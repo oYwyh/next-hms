@@ -30,6 +30,7 @@ import {
   CommandSeparator,
 } from "@/components/ui/Command";
 import { Label } from "./Lable";
+import { THours } from "@/lib/types";
 
 const multiSelectVariants = cva(
   "m-1 transition ease-in-out delay-150 hover:-translate-y-1 hover:scale-110 duration-300",
@@ -65,8 +66,8 @@ interface MultiSelectProps
     value: string;
   }[]) => void | undefined) | undefined;
   onValueChange: (value: string[]) => void;
-  label: string,
   defaultValue: string[];
+  label?: string,
   placeholder?: string;
   animation?: number;
   maxCount?: number;
@@ -134,9 +135,7 @@ export const MultiSelect = React.forwardRef<
           }
         }
         if (setSelectedHours && selectedHours) {
-          setSelectedHours((prev: { day: string; value: string; }[]) =>
-            prev.filter((hour) => hour.day !== value)
-          );
+          setSelectedHours(selectedHours.filter((hour) => hour.day !== value));
         }
       } else {
         // Add the value if it's not present

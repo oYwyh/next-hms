@@ -3,7 +3,7 @@
 import { InsertedCredit, TloginSchema, loginSchema } from "@/app/auth/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { login } from "@/actions/auth/auth.action";
+import { login } from "@/actions/auth/auth.actions";
 import { Form } from "@/components/ui/Form";
 import FormField from "@/components/ui/custom/FormField";
 import { Button } from "@/components/ui/Button";
@@ -24,7 +24,6 @@ export default function Login({ insertedCredit }: { insertedCredit: InsertedCred
     const result = await login(data);
 
     if (result?.error) {
-      // Assuming result.error is an object with field-specific errors
       form.setError("password", { type: 'server', message: 'Invalid Password' });
     }
   };
