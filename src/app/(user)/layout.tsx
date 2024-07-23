@@ -1,4 +1,4 @@
-import Provider from "@/app/(user)/Provider";
+import AppointmentContextProvider from "@/Providers/AppointmentContext";
 import { validateRequest } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
@@ -16,9 +16,7 @@ export default async function UserLayout({
 
   return (
     <>
-      <Provider>
-        {children}
-      </Provider>
+      {children}
     </>
   );
 }

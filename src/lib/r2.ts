@@ -26,15 +26,23 @@ const maxFileSize = 5 * 1024 * 1024 // 5MB
 const acceptedPfpTypes = ['image/jpg', 'image/png', 'image/jpeg', 'image/webp']
 const acceptedTypes = ['image/jpg', 'image/png', 'image/jpeg', 'image/webp', 'application/pdf']
 
-export async function getSignUrl(key: string | '', type: string, size: number, checkSum?: string, folderId?: number, userId?: string, lastPic?: string) {
+export async function getSignUrl(
+    key: string | '',
+    type: string,
+    size: number,
+    checkSum?: string,
+    folderId?: number,
+    userId?: string,
+    pfp?: boolean,
+    lastPic?: string
+) {
     const { user } = await validateRequest()
-
     if (!user) throw new Error('Unauthorized')
-
     if (size > maxFileSize) throw new Error('File size too large')
+    if (!userId) userId = user.id
 
-    if (userId && !acceptedPfpTypes.includes(type)) throw new Error('Unsupported file type')
-    if (!userId && !acceptedTypes.includes(type)) throw new Error('Unsupported file type')
+    if (pfp && !acceptedPfpTypes.includes(type)) throw new Error('Unsupported file type')
+    if (!pfp && !acceptedTypes.includes(type)) throw new Error('Unsupported file type')
 
     const fileName = generateFileName() + `-${key}`;
     const putObjectCommand = new PutObjectCommand({
@@ -45,18 +53,16 @@ export async function getSignUrl(key: string | '', type: string, size: number, c
         ChecksumSHA256: checkSum ? checkSum : undefined,
         Metadata: {
             // so we can check which user uploaded it later in the frontend
-            userId: user.id,
+            userId: userId
         }
     })
 
     const signedUrl = await getSignedUrl(S3, putObjectCommand, { expiresIn: 3600 })
 
-    if (folderId) {
-        console.log('folderId', folderId);
-        await db.insert(userMedicalFilesTable).values({ name: fileName, folderId: folderId });
+    if (folderId && fileName) {
+        await db.insert(userMedicalFilesTable).values({ name: fileName, folderId: folderId, userId: userId });
     }
-
-    if (userId) {
+    if (pfp) {
         console.log('userId', userId)
         await db.update(userTable).set({ picture: fileName }).where(sql`${userTable.id} = ${userId}`);
     }
@@ -151,9 +157,4 @@ export async function deleteFile(name: string, medical: boolean = true, s3: bool
     } catch (error) {
         console.error(`Error deleting file from database: ${name}`, error);
     }
-}
-
-export async function uploaded(path: string) {
-    if (!path) throw new Error('Invalid path')
-    return revalidatePath(path)
 }

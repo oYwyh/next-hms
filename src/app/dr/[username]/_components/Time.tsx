@@ -1,56 +1,25 @@
 'use client'
 
-import { AppointmentContext } from "@/app/(user)/context";
-import { book } from "@/app/(user)/user.actions";
-import { Button } from "@/components/ui/Button";
-import db from "@/lib/db";
-import { doctorTable, userTable, workDaysTable, workHoursTable } from "@/lib/db/schema";
-import { and, eq, sql } from "drizzle-orm";
 import { CalendarDays } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useContext } from "react";
+import { book } from "@/actions/appointment.actions";
+import { useRouter } from 'next/navigation'
+import { useContext, useEffect, useState } from "react";
+import { AppointmentContext } from "@/context/appointment.context";
+import { getDateByDayName } from "@/lib/funcs";
+import { UserRoles } from "@/types/index.types";
 
-export default function Time({ appointmentInfo, userId }: { appointmentInfo: any, userId: string }) {
+export default function Time({ appointmentInfo, userId, role }: { appointmentInfo: any, userId: string, role: UserRoles }) {
     const router = useRouter()
     const context = useContext(AppointmentContext);
 
-    function formatTime(timeString: string) {
-        const [hours, minutes] = timeString.split(':');
-        return `${hours}:${minutes}`;
-    }
-
-    function getDateByDayName(dayName: string) {
-        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'faturday'];
-        const today = new Date();
-        const currentDay = today.getDay();
-        const targetDay = days.indexOf(dayName);
-        let diff = targetDay - currentDay;
-
-        if (diff <= 0) {
-            diff += 7;
-        }
-
-        const targetDate = new Date(today);
-        targetDate.setDate(today.getDate() + diff);
-
-        const year = targetDate.getFullYear();
-        const month = String(targetDate.getMonth() + 1).padStart(2, '0');
-        const day = String(targetDate.getDate()).padStart(2, '0');
-
-        return `${year}-${month}-${day}`;
-    }
-
-    const onSubmit = async (doctorId: string, date: string, from: string, to: string) => {
-        console.log(doctorId, date, from, to)
+    const onSubmit = async (doctorId: number, date: string, from: string, to: string) => {
         const result = await book(userId, doctorId, date, from, to);
-
-        console.log(context)
-
+        console.log("Booking result:", result);
 
         if (context) {
             if (result?.reserved) {
-                router.push('/reservation')
-                context.setAppointmentId(result?.appointment?.id)
+                context.setAppointmentId(result?.appointment?.id);
+                router.push('/reservation');
             } else {
                 throw new Error('Failed to book appointment');
             }
@@ -89,10 +58,16 @@ export default function Time({ appointmentInfo, userId }: { appointmentInfo: any
                                             <div key={hour.id} className="
                                                 flex flex-row gap-1 items-center cursor-pointer h-full border-2 border-[#17A2B8] px-5 py-2 rounded-md
                                                 transition ease-in-out hover:shadow-2xl hover:bg-[#0099A8] hover:border-[#084F6D]"
-                                                onClick={() => onSubmit(appointmentInfo[0].user.id, getDateByDayName(day.day), hour.from, hour.to)}
+                                                onClick={() => {
+                                                    if (role == 'user') {
+                                                        onSubmit(appointmentInfo[0].doctor.id, getDateByDayName(day.day), hour.from, hour.to)
+                                                    } else {
+                                                        alert('Must be a user role')
+                                                    }
+                                                }}
                                             >
-                                                <p className="text-[14px] z-20">{formatTime(hour.from)} -</p>
-                                                <p className="text-[14px] z-20">{formatTime(hour.to)}</p>
+                                                <p className="text-[14px] z-20">{hour.from} -</p>
+                                                <p className="text-[14px] z-20">{hour.to}</p>
                                             </div>
                                         </div>
                                     )

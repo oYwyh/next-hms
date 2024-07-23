@@ -30,7 +30,7 @@ import {
   CommandSeparator,
 } from "@/components/ui/Command";
 import { Label } from "./Lable";
-import { THours } from "@/lib/types";
+import { THours } from "@/types/index.types";
 
 const multiSelectVariants = cva(
   "m-1 transition ease-in-out delay-150 hover:-translate-y-1 hover:scale-110 duration-300",

@@ -3,12 +3,12 @@
 import FormField from "@/components/ui/custom/FormField";
 import { Form, FormMessage } from "@/components/ui/Form";
 import { useForm } from "react-hook-form";
-import { diagnosisSchema, TdiagnosisSchema } from "@/app/(dashboard)/types";
+import { diagnosisSchema, TdiagnosisSchema } from "@/types/dashboard.types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/Button";
 import { MultiSelect } from "@/components/ui/MultiSelect";
 import { useEffect, useState } from "react";
-import { createReservation } from "@/app/(dashboard)/_actions/appointment.actions";
+import { createReservation } from "@/actions/appointment.actions";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
 import { Label } from "@/components/ui/Lable";
@@ -54,15 +54,15 @@ export default function Diagnosis({ appointmentId, view, reservation }: { appoin
 
         if (result && result.reserved) {
             if (selectedLaboratory.length > 0) {
-                return router.push(`/doctor/appointments/reservation/${appointmentId}/prescriptions/laboratory`)
+                return router.push(`/dashboard/appointments/reservation/${appointmentId}/prescriptions/laboratory`)
             }
             if (selectedRadiology.length > 0) {
-                return router.push(`/doctor/appointments/reservation/${appointmentId}/prescriptions/radiology`)
+                return router.push(`/dashboard/appointments/reservation/${appointmentId}/prescriptions/radiology`)
             }
             if (selectedMedicine.length > 0) {
-                return router.push(`/doctor/appointments/reservation/${appointmentId}/prescriptions/medicine`)
+                return router.push(`/dashboard/appointments/reservation/${appointmentId}/prescriptions/medicine`)
             }
-            return router.push('/doctor/appointments');
+            return router.push('/dashboard/appointments');
         }
     }
 

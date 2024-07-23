@@ -1,6 +1,6 @@
 'use client'
 
-import { TReview, TUser } from "@/lib/types"
+import { TReview, TUser } from "@/types/index.types"
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Star } from "lucide-react"
 import { useEffect, useState } from "react";

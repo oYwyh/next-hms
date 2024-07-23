@@ -6,7 +6,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/Form";
-import { Check, ChevronsUpDown } from "lucide-react"
+import { Check, ChevronsUpDown } from "lucide-react";
 import { Control, useController } from "react-hook-form";
 import {
   Select,
@@ -16,27 +16,27 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/Select"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/Button"
+} from "@/components/ui/Select";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/Button";
 import {
   Command,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
-} from "@/components/ui/Command"
+} from "@/components/ui/Command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/Popover"
-import { toast } from "@/components/ui/useToast"
+} from "@/components/ui/Popover";
+import { toast } from "@/components/ui/useToast";
 import { Switch } from "@/components/ui/Switch";
 import { Dispatch, SetStateAction } from "react";
 import { Textarea } from "@/components/ui/Textarea";
 import { Rating } from "react-simple-star-rating";
-
+import { receptionistDepartments, specialties as specialtyOpts } from "@/constants";
 
 interface FormFieldProps {
   form: {
@@ -50,38 +50,33 @@ interface FormFieldProps {
   select?: string;
   switch?: string;
   onSwitchChange?: (checked: boolean) => void;
-  doctors?: any,
-  setState?: any,
-  isTextarea?: boolean,
-  placeholder?: string,
-  rating?: boolean,
-  handleRating?: (rate: number) => void
+  doctors?: any;
+  specialties?: {
+    label: string;
+    value: string;
+  }[];
+  setState?: any;
+  isTextarea?: boolean;
+  placeholder?: string;
+  rating?: boolean;
 }
-
-const specialties = [
-  { label: "All Specialties", value: "all" },
-  { label: "General Surgery", value: "general_surgery" },
-  { label: "Podo", value: "podo" },
-  { label: "Orthopedics", value: "orthopedics" },
-]
-
 
 export default function FormField({
   form,
   name,
   error,
-  defaultValue,
+  defaultValue = "",
   disabled,
   type,
   select,
   switch: switchValue,
   onSwitchChange,
   doctors,
+  specialties = specialtyOpts,
   setState,
   isTextarea,
   placeholder,
   rating,
-  handleRating
 }: FormFieldProps) {
   const {
     field,
@@ -97,19 +92,16 @@ export default function FormField({
       <CFormField
         control={form.control}
         name={name}
-        render={({ field: { onChange } }) => (
-          <FormItem
-            className="w-full"
-          >
-            {type != 'hidden' && !isTextarea && !select && !switchValue && !rating && (
+        render={({ field: { onChange, value = "" } }) => (
+          <FormItem className="w-full">
+            {type != "hidden" && !isTextarea && !select && !switchValue && !rating && (
               <>
-                <FormLabel>
-                  {name.charAt(0).toUpperCase() + name.slice(1)}
-                </FormLabel>
+                <FormLabel>{name.charAt(0).toUpperCase() + name.slice(1)}</FormLabel>
                 <FormControl>
                   <Input
                     placeholder={name.charAt(0).toUpperCase() + name.slice(1)}
-                    {...field}
+                    value={value}
+                    onChange={onChange}
                     disabled={disabled}
                     type={type}
                   />
@@ -117,26 +109,29 @@ export default function FormField({
                 <FormMessage>{fieldError?.message}</FormMessage>
               </>
             )}
-            {type != 'hidden' && isTextarea && (
+            {type != "hidden" && isTextarea && (
               <>
-                <FormLabel>
-                  {name.charAt(0).toUpperCase() + name.slice(1)}
-                </FormLabel>
+                <FormLabel>{name.charAt(0).toUpperCase() + name.slice(1)}</FormLabel>
                 <FormControl>
                   <Textarea
                     placeholder={placeholder ? placeholder : name.charAt(0).toUpperCase() + name.slice(1)}
+                    value={value}
+                    onChange={onChange}
                     className="resize-none"
-                    {...field}
                     disabled={disabled}
                   />
                 </FormControl>
                 <FormMessage>{fieldError?.message}</FormMessage>
               </>
             )}
-            {select == 'gender' && (
+            {select == "gender" && (
               <>
                 <FormLabel>Gender</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={disabled}>
+                <Select
+                  onValueChange={onChange}
+                  defaultValue={value}
+                  disabled={disabled}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a gender" />
@@ -150,7 +145,7 @@ export default function FormField({
                 <FormMessage>{fieldError?.message}</FormMessage>
               </>
             )}
-            {select == 'specialty' && (
+            {select == "specialty" && (
               <>
                 <Popover>
                   <PopoverTrigger asChild>
@@ -158,15 +153,10 @@ export default function FormField({
                       <Button
                         variant="outline"
                         role="combobox"
-                        className={cn(
-                          "w-[200px] justify-between",
-                          !field.value && "text-muted-foreground"
-                        )}
+                        className={cn("w-[200px] justify-between", !value && "text-muted-foreground")}
                       >
-                        {field.value
-                          ? specialties.find(
-                            (specialty) => specialty.value === field.value
-                          )?.label
+                        {value
+                          ? specialties.find((specialty) => specialty.value === value)?.label
                           : "Select specialty"}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
@@ -191,9 +181,7 @@ export default function FormField({
                             <Check
                               className={cn(
                                 "mr-2 h-4 w-4",
-                                specialty.value === field.value
-                                  ? "opacity-100"
-                                  : "opacity-0"
+                                specialty.value === value ? "opacity-100" : "opacity-0"
                               )}
                             />
                             {specialty.label}
@@ -206,8 +194,52 @@ export default function FormField({
                 <FormMessage>{fieldError?.message}</FormMessage>
               </>
             )}
-            {select == 'doctors' && (
-
+            {select == "receptionistDepartment" && (
+              <div className="flex flex-col gap-2">
+                <FormLabel>Receptionist Department</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className={cn("w-[200px] justify-between", !value && "text-muted-foreground")}
+                      >
+                        {value
+                          ? receptionistDepartments.find((receptionistDepartment) => receptionistDepartment.value === value)?.label
+                          : "Select Department"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[200px] p-0">
+                    <Command>
+                      <CommandInput placeholder="Search Departments..." />
+                      <CommandEmpty>No department found.</CommandEmpty>
+                      <CommandGroup>
+                        {receptionistDepartments.map((receptionistDepartment) => (
+                          <CommandItem
+                            value={receptionistDepartment.value}
+                            key={receptionistDepartment.value}
+                            onSelect={onChange}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                receptionistDepartment.value === value ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {receptionistDepartment.label}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                <FormMessage>{fieldError?.message}</FormMessage>
+              </div>
+            )}
+            {select == "doctors" && (
               <>
                 <Popover>
                   <PopoverTrigger asChild>
@@ -215,16 +247,10 @@ export default function FormField({
                       <Button
                         variant="outline"
                         role="combobox"
-                        className={cn(
-                          "w-[200px] justify-between",
-                          !field.value && "text-muted-foreground"
-                        )}
+                        className={cn("w-[200px] justify-between", !value && "text-muted-foreground")}
                       >
-                        {field.value
-                          ? doctors?.find(
-
-                            (doctor: any) => doctor?.value === field.value
-                          )?.label
+                        {value
+                          ? doctors?.find((doctor: any) => doctor?.value === value)?.label
                           : "Select doctor"}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
@@ -235,27 +261,21 @@ export default function FormField({
                       <CommandInput placeholder="Search doctor..." />
                       <CommandEmpty>No doctor found.</CommandEmpty>
                       <CommandGroup>
-                        {doctors?.map((doctor: any) => {
-                          return (
-                            <CommandItem
-                              value={doctor.value}
-                              key={doctor.value}
-                              onSelect={() => {
-                                form?.setValue("doctor", doctor.value)
-                              }}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  doctor.value === field.value
-                                    ? "opacity-100"
-                                    : "opacity-0"
-                                )}
-                              />
-                              {doctor.label}
-                            </CommandItem>
-                          )
-                        })}
+                        {doctors?.map((doctor: any) => (
+                          <CommandItem
+                            value={doctor.value}
+                            key={doctor.value}
+                            onSelect={onChange}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                doctor.value === value ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {doctor.label}
+                          </CommandItem>
+                        ))}
                       </CommandGroup>
                     </Command>
                   </PopoverContent>
@@ -263,11 +283,11 @@ export default function FormField({
                 <FormMessage>{fieldError?.message}</FormMessage>
               </>
             )}
-            {switchValue == 'super' && (
+            {switchValue == "super" && (
               <Switch
-                checked={field.value}
+                checked={value}
                 onCheckedChange={(checked) => {
-                  field.onChange(checked);
+                  onChange(checked);
                   if (onSwitchChange) {
                     onSwitchChange(checked);
                   }
@@ -275,19 +295,20 @@ export default function FormField({
                 aria-readonly
               />
             )}
-            {rating == true && (
+            {rating && (
               <div className="flex flex-row justify-center">
                 <Rating
                   onClick={onChange}
-                  SVGclassName='inline-block'
+                  SVGclassName="inline-block"
                   allowFraction
                   transition
                 />
                 <FormMessage>{fieldError?.message}</FormMessage>
               </div>
             )}
-          </FormItem>
-        )}
+          </FormItem >
+        )
+        }
       />
       {error && <FormMessage>{error}</FormMessage>}
     </>

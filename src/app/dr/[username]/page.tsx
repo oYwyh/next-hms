@@ -5,7 +5,7 @@ import Time from "@/app/dr/[username]/_components/Time";
 import { validateRequest } from "@/lib/auth";
 import db from "@/lib/db"
 import { doctorTable, reviewTable, userTable, workDaysTable, workHoursTable } from "@/lib/db/schema";
-import { TDoctor, TUser } from "@/lib/types";
+import { TDoctor, TUser } from "@/types/index.types";
 import { eq, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
@@ -75,7 +75,7 @@ export default async function drPage({ params: { username } }: { params: { usern
                 <About doctor={doctor} />
                 <Reviews doctor={doctor} reviews={reviews} />
             </div>
-            <Time appointmentInfo={appointmentInfo} userId={user.id} />
+            <Time appointmentInfo={appointmentInfo} userId={user.id} role={user.role} />
         </div>
     )
 }

@@ -8,9 +8,9 @@ export default async function AdminLayout({
 }>) {
     const { user } = await validateRequest();
 
-    if (user?.role == 'admin') redirect("/admin")
-    if (user?.role == 'doctor') redirect("/doctor")
-    if (user?.role == "user") redirect("user")
+    if (user?.role == 'admin') redirect("/dashboard")
+    if (user?.role == 'doctor') redirect("/dashboard")
+    if (user?.role == "user") redirect("/")
 
     return children;
 }

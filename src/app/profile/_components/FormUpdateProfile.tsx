@@ -5,9 +5,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from "@/components/ui/Button";
 import { Form, FormMessage } from "@/components/ui/Form";
 import { useForm } from "react-hook-form";
-import { TupdateProfileSchema, updateProfileSchema } from "@/app/(dashboard)/types";
+import { TupdateProfileSchema, updateProfileSchema } from "@/types/dashboard.types";
 import { useEffect, useState } from "react";
-import { updateProfile } from "../profile.actions";
+import { updateProfile } from "@/actions/profile.actions";
 import toast from "react-hot-toast";
 
 type FormUpdateProfileTypes = {

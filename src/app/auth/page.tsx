@@ -1,9 +1,9 @@
 "use client";
 
 import { useForm } from "react-hook-form";
-import { InsertedCredit, TcheckSchema, checkSchema } from "@/app/auth/types";
+import { InsertedCredit, TcheckSchema, checkSchema } from "@/types/auth.types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { checkCredit } from "@/actions/auth/auth.actions";
+import { checkCredit } from "@/actions/auth.actions";
 import { useState } from "react";
 import Login from "./_components/login";
 import Register from "./_components/register";
@@ -63,7 +63,7 @@ export default function AuthPage() {
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)}>
                     <FormField form={form} name="credit" />
-                    <Button type="submit">Submit</Button>
+                    <Button className="mt-3 w-full" type="submit">Submit</Button>
                     {error && <FormMessage>{error}</FormMessage>}
                   </form>
                 </Form>

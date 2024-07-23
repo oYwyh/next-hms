@@ -36,7 +36,7 @@ export default function Actions({ row }: { row: Row<any> }) {
                 <DropdownMenuLabel >Actions</DropdownMenuLabel>
                 <div className="flex flex-col gap-2">
                     {user && user.role == 'admin' && status == 'completed' ? (
-                        <Link href={`/admin/manage/appointments/reservation/${appointmentId}/view`}>
+                        <Link href={`/dashboard/appointments/reservation/${appointmentId}/view`}>
                             <Button className="w-[100%]">
                                 View
                             </Button>
@@ -44,7 +44,7 @@ export default function Actions({ row }: { row: Row<any> }) {
                     ) : (
                         <>
                             {user && doctorId == user.id && status == 'completed' && (
-                                <Link href={`/doctor/appointments/reservation/${appointmentId}/view`}>
+                                <Link href={`/dashboard/appointments/reservation/${appointmentId}/view`}>
                                     <Button className="w-[100%]">
                                         View
                                     </Button>
@@ -58,7 +58,7 @@ export default function Actions({ row }: { row: Row<any> }) {
                                 </Link>
                             )}
                             {user && doctorId == user.id && status != 'completed' && (
-                                <Link href={`/doctor/appointments/reservation/${appointmentId}`}>
+                                <Link href={`/dashboard/appointments/reservation/${appointmentId}`}>
                                     <Button className="w-[100%]">
                                         Start
                                     </Button>

@@ -5,7 +5,7 @@ import { DrizzlePostgreSQLAdapter } from "@lucia-auth/adapter-drizzle";
 import { sessionTable, userTable } from "./db/schema";
 import { cache } from "react";
 import { cookies } from "next/headers";
-import { TUser } from "@/lib/types";
+import { TUser } from "@/types/index.types";
 
 const adapter = new DrizzlePostgreSQLAdapter(db, sessionTable, userTable); // your adapter
 
@@ -99,11 +99,11 @@ interface DatabaseUserAttributes {
   admin?: {
     id: string | number;
     super: boolean;
-    user_id: string;
+    userId: string;
   }
   doctor?: {
     id: string | number;
     specialty: string;
-    user_id: string;
+    userId: string;
   }
 }

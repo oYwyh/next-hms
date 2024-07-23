@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/Button";
 import { Form } from "@/components/ui/Form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { updatePassword } from "../profile.actions";
+import { updatePassword } from "@/actions/profile.actions";
 import toast from "react-hot-toast";
 import { useState } from "react";
-import { passwordSchema, TpasswordSchema } from "@/app/(dashboard)/types";
+import { passwordSchema, TpasswordSchema } from "@/types/dashboard.types";
 
 type FormUpdatePasswordTypes = {
   id: string;

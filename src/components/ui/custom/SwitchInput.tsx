@@ -1,7 +1,7 @@
-import { useForm } from "react-hook-form"
-import FormField from "@/components/ui/custom/FormField"
-import { Button } from "@/components/ui/Button"
-import { Form } from "@/components/ui/Form"
+import { useForm } from "react-hook-form";
+import FormField from "@/components/ui/custom/FormField";
+import { Button } from "@/components/ui/Button";
+import { Form } from "@/components/ui/Form";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -11,39 +11,56 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-    AlertDialogTrigger,
-} from "@/components/ui/AlertDialog"
-import { toggleSuper } from "@/app/(dashboard)/_actions/operations.actions"
-import { useState } from "react"
+} from "@/components/ui/AlertDialog";
+import { toggleSuper } from "@/actions/operations.actions";
+import { useState, useEffect } from "react";
 
 export default function SwitchInput({ id, value }: { id: string | number | any, value: string | boolean }) {
     const form = useForm({
         defaultValues: {
-            super: value
-        }
-    })
+            super: value,
+        },
+    });
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [currentSwitchValue, setCurrentSwitchValue] = useState(value);
+    const [previousSwitchValue, setPreviousSwitchValue] = useState(value);
 
     const onSubmit = async (data: any) => {
-        if (data.super == undefined) {
-            data.super = false
+        if (data.super === undefined) {
+            data.super = false;
         }
         const superValue = data.super;
-        const result = await toggleSuper(id, superValue)
-        setIsDialogOpen(false)
+        const result = await toggleSuper(id, superValue);
+        setIsDialogOpen(false);
 
-        console.log(result)
-    }
+        console.log(result);
+    };
 
     const handleSwitchChange = (checked: boolean) => {
-        form.setValue("super", checked);
+        setPreviousSwitchValue(currentSwitchValue); // Store the current value before changing it
+        setCurrentSwitchValue(checked);
         setIsDialogOpen(true);
     };
 
+    const handleSwitchCancel = () => {
+        setIsDialogOpen(false);
+        setCurrentSwitchValue(previousSwitchValue); // Revert to the previous value
+        form.setValue("super", previousSwitchValue); // Update the form value as well
+    };
+
+    const handleSwitchConfirm = () => {
+        form.setValue("super", currentSwitchValue); // Confirm the new value
+        form.handleSubmit(onSubmit)();
+    };
+
+    useEffect(() => {
+        form.setValue("super", currentSwitchValue); // Sync form value with switch state
+    }, [currentSwitchValue, form]);
+
     return (
         <Form {...form}>
-            <form >
+            <form>
                 <FormField
                     form={form}
                     name="super"
@@ -60,15 +77,14 @@ export default function SwitchInput({ id, value }: { id: string | number | any, 
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                            <AlertDialogCancel onClick={() => setIsDialogOpen(false)}>Cancel</AlertDialogCancel>
+                            <AlertDialogCancel onClick={handleSwitchCancel}>Cancel</AlertDialogCancel>
                             <AlertDialogAction asChild>
-                                <Button type="submit" onClick={form.handleSubmit(onSubmit)}
-                                >Continue</Button>
+                                <Button type="button" onClick={handleSwitchConfirm}>Continue</Button>
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>
             </form>
         </Form>
-    )
+    );
 }

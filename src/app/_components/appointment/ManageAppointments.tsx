@@ -1,9 +1,10 @@
 import { DataTable } from "@/components/ui/table/DataTable";
 import db from "@/lib/db";
-import { useGetUser } from "@/hooks/useGetUser";
 import { appointmentTable } from "@/lib/db/schema";
 import { sql } from "drizzle-orm";
 import { AppointmentTableColumns } from "@/app/_components/appointment/columns";
+import { validateRequest } from "@/lib/auth";
+import { useGetUser } from "@/hooks/useGetUser";
 
 async function getData() {
     const user = await useGetUser();
@@ -11,7 +12,7 @@ async function getData() {
     const appointments = await db.query.appointmentTable.findMany({
         where: user?.role === 'admin'
             ? sql`TRUE` // This will fetch all appointments
-            : sql`${user?.role == 'user' ? appointmentTable.userId : appointmentTable.doctorId} = ${user?.id}`,
+            : sql`${user?.role === 'user' ? appointmentTable.userId : Number(appointmentTable.doctorId)} = ${user?.role === 'user' ? user?.id : Number(user?.doctor?.id)}`,
         with: {
             user: {
                 columns: {

@@ -1,4 +1,4 @@
-import { logout } from "@/actions/auth/auth.actions";
+import { logout } from "@/actions/auth.actions";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useGetUser } from "@/hooks/useGetUser";
@@ -18,26 +18,31 @@ export default async function Home() {
           <div className="felx flex-col gap-5">
             <pre className="user-json">{JSON.stringify(user, null, 2)}</pre>
             <div className="flex flex-row gap-3">
-              {user?.role == 'admin' &&
-                <Link href="/admin">
-                  <Button>
-                    admin dashbaord
-                  </Button>
-                </Link>
-              }
-              {user?.role == 'doctor' &&
-                <Link href="/doctor">
-                  <Button>
-                    Doctor dashbaord
+              {user?.role != 'user' &&
+                <Link href="/dashboard">
+                  <Button className="capitalize">
+                    {user?.role} dashbaord
                   </Button>
                 </Link>
               }
               {user?.role == 'user' &&
-                <Link href="/user">
-                  <Button>
-                    User dashbaord
-                  </Button>
-                </Link>
+                <div className="flex flex-row gap-3">
+                  <Link href="/booking">
+                    <Button>
+                      Book an appointment
+                    </Button>
+                  </Link>
+                  <Link href="/appointments">
+                    <Button>
+                      User Appointments
+                    </Button>
+                  </Link>
+                  <Link href="/files">
+                    <Button>
+                      User Medical Files
+                    </Button>
+                  </Link>
+                </div>
               }
               <form action={logout}>
                 <Button>Sign out</Button>

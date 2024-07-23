@@ -6,7 +6,7 @@ import { eq, sql } from "drizzle-orm"
 import PatientInfo from "./PatientInfo"
 import Diagnosis from "./Diagnosis"
 import Prescriptions from "./Prescriptions"
-import RatingModal from "../RatingModal"
+import RatingModal from "@/components/ui/custom/RatingModal"
 
 const getInfo = async (appointmentId: number) => {
     const info = await db.query.appointmentTable.findFirst({

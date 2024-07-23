@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from "react";
-import FileUploader from "@/app/_components/FileUploader";
+import FileUploader from "@/components/ui/custom/FileUploader";
 import { User } from "lucia";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
 
@@ -16,7 +16,7 @@ export default function UpdateProfilePicture({ user }: { user: User }) {
                 <AvatarFallback>CN</AvatarFallback>
             </Avatar>
             {user.role != 'user' && (
-                <FileUploader open={open} lastPic={user.picture} setOpen={setOpen} userId={user.id} />
+                <FileUploader open={open} lastPic={user.picture} setOpen={setOpen} pfp={true} />
             )}
         </div>
     )

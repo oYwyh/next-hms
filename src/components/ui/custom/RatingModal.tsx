@@ -10,16 +10,16 @@ import {
     DialogTrigger,
 } from "@/components/ui/Dialog"
 import { useEffect, useState } from "react"
-import { TUser } from '@/lib/types'
+import { TUser } from '@/types/index.types'
 import { useForm } from 'react-hook-form'
 import { Form } from '@/components/ui/Form'
 import FormField from '@/components/ui/custom/FormField'
 import { Button } from '@/components/ui/Button'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { postReview } from '@/actions'
+import { postReview } from '@/actions/index.actions'
 
-export default function RatingModal({ user, appointmentId, doctorId }: { user: TUser, appointmentId: number, doctorId: string }) {
+export default function RatingModal({ user, appointmentId, doctorId }: { user: TUser, appointmentId: number, doctorId: number }) {
     if (!user) throw new Error('User not found');
     if (user.role != 'user') return;
 
@@ -53,7 +53,7 @@ export default function RatingModal({ user, appointmentId, doctorId }: { user: T
                         <form onSubmit={form.handleSubmit(onSubmit)} className='flex flex-col gap-2 pt-3'>
                             <FormField form={form} name="rating" rating={true} />
                             <FormField form={form} name="review" isTextarea={true} />
-                            <Button>Test</Button>
+                            <Button>Submit</Button>
                         </form>
                     </Form>
                 </DialogHeader>

@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/AlertDialog"
 
 import { Dispatch, SetStateAction, useState } from "react";
-import { cancel } from "@/app/(dashboard)/_actions/appointment.actions";
+import { cancel } from "@/actions/appointment.actions";
 
 export default function Cancel(
     {

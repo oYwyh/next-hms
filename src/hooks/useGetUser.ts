@@ -36,6 +36,17 @@ export const useGetUser = async () => {
       },
     });
     return doctor;
+  } else if (user?.role === "receptionist") {
+    const receptionist = await db.query.userTable.findFirst({
+      columns: {
+        password: false,
+      },
+      where: (userTable, { eq }) => eq(userTable.id, user.id),
+      with: {
+        receptionist: true
+      },
+    });
+    return receptionist;
   }
 
   return user;

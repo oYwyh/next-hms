@@ -14,7 +14,7 @@ import {
 import { Button } from '../Button';
 import Link from 'next/link';
 import { deleteFile } from '@/lib/r2';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     'pdfjs-dist/build/pdf.worker.min.mjs',
@@ -23,12 +23,27 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
+import { checkPdfOwner, getUserId } from '@/actions/index.actions';
 
 export default function Pdf({ name }: { name: string }) {
+
     const [numPages, setNumPages] = useState<number | null>(null);
     const [pageNumber, setPageNumber] = useState(1);
-
+    const [isOwner, setIsOwser] = useState<boolean | undefined>(undefined)
     const queryClient = useQueryClient()
+
+    const { data } = useQuery({
+        queryKey: ['pdf', name],
+        queryFn: async () => {
+            const id = await getUserId()
+            if (!id) throw new Error('User not found')
+            const result = await checkPdfOwner(name, id)
+
+            if (result == undefined) {
+                setIsOwser(false)
+            }
+        },
+    })
 
     function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
         setNumPages(numPages);
@@ -57,15 +72,17 @@ export default function Pdf({ name }: { name: string }) {
                 >
                     <Page className={'rounded-lg relative z-20'} pageNumber={pageNumber}>
                         <div className='flex flex-row gap-3 absolute top-2 right-2 z-30'>
-                            <Trash2
-                                className='cursor-pointer'
-                                color='#E6383C'
-                                onClick={async () => {
-                                    await deleteFile(name, true)
-                                    queryClient.invalidateQueries({ queryKey: ['files'] })
-                                }}
-                            />
-                            <Link href={`${process.env.NEXT_PUBLIC_R2_FILES_URL}/${name}`} className='cursor-pointer'><Fullscreen /></Link>
+                            {isOwner && (
+                                <Trash2
+                                    className='cursor-pointer'
+                                    color='#E6383C'
+                                    onClick={async () => {
+                                        await deleteFile(name, true)
+                                        queryClient.invalidateQueries({ queryKey: ['files'] })
+                                    }}
+                                />
+                            )}
+                            <Link href={`${process.env.NEXT_PUBLIC_R2_FILES_URL}/${name}`} target='_blank' draggable={false} className='cursor-pointer'><Fullscreen /></Link>
                         </div>
                     </Page>
                 </Document>

@@ -4,7 +4,7 @@ import { ColumnDef, Row } from "@tanstack/react-table"
 import { DataTableColumnHeader } from "@/components/ui/table/DataTableColumnHeader"
 import { SelectTableColumn, ExportTableColumn } from "@/constants/columns"
 import Actions from "./AppointmentActions"
-import { AppointmentStatus } from "@/lib/types"
+import { AppointmentStatus } from "@/types/index.types"
 import { statusOpt } from "@/constants"
 
 const appointmentColumns = ['id', 'userId', 'doctorId', 'doctorName', 'patientName', 'date', 'time', 'status']

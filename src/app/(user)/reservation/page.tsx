@@ -1,14 +1,17 @@
 'use client'
 
 import { useContext, useEffect, useState } from "react";
-import { AppointmentContext } from "../context";
-import { appointmentDetails } from "../user.actions";
+import { AppointmentContext } from "@/context/appointment.context";
+import { appointmentDetails } from "@/actions/user.actions";
 import { redirect } from "next/navigation";
 
 export default function ReservationPage() {
     const context = useContext(AppointmentContext);
 
-    if (context == undefined || !context?.appointmentId) return redirect('/appointments')
+    if (context == undefined || !context?.appointmentId) {
+        redirect('/appointments')
+        return;
+    }
 
     const { appointmentId } = context || {};
 

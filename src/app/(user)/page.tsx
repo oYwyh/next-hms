@@ -1,4 +1,4 @@
-import { logout } from "@/actions/auth/auth.actions";
+import { logout } from "@/actions/auth.actions";
 import { Button } from "@/components/ui/Button";
 import { validateRequest } from "@/lib/auth";
 import Link from "next/link";

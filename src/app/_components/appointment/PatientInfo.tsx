@@ -18,7 +18,7 @@ import Image from "next/image";
 import Pdf from "@/components/ui/custom/Pdf";
 import { RefreshCw, ZoomIn, ZoomOut } from "lucide-react";
 import 'react-photo-view/dist/react-photo-view.css';
-import { TUserMedicalFolders } from "@/lib/types";
+import { TUserMedicalFolders } from "@/types/index.types";
 
 export default function PatientInfo({ patient, folders }: { patient: any /* User */, folders: any }) {
     if (!patient) throw new Error('Failed to get patient info');

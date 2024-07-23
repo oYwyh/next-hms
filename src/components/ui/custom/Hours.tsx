@@ -2,6 +2,7 @@ import { Command, Plus, Trash2 } from "lucide-react";
 import React, { useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { TimePicker } from "@/components/ui/custom/TimePicker";
+import { THours } from "@/types/index.types";
 
 type HoursType = {
   selectedHours: { day: string; value: string }[];
@@ -37,26 +38,72 @@ export default function Hours({ selectedHours, setSelectedHours, day, hoursList 
       setError('Please select from and to time');
       return;
     }
-    if (hourFrom.substring(0, hourFrom.indexOf(':')) >= hourTo.substring(0, hourTo.indexOf(':'))) {
+
+    const fromHour = parseInt(hourFrom.split(':')[0], 10);
+    const fromMinute = parseInt(hourFrom.split(':')[1], 10);
+    const toHour = parseInt(hourTo.split(':')[0], 10);
+    const toMinute = parseInt(hourTo.split(':')[1], 10);
+
+    // Convert times to minutes since start of day
+    let fromMinutes = fromHour * 60 + fromMinute;
+    let toMinutes = toHour * 60 + toMinute;
+
+    // Handle midnight wrap-around
+    if (toMinutes === 0) {
+      toMinutes = 24 * 60; // 24:00 in minutes
+    }
+
+    if (fromMinutes >= toMinutes) {
       setError('Invalid time range');
       return;
     }
 
-    const newHour = { day, value: `${hourFrom} - ${hourTo}` };
-    const exists = selectedHours.some(hour => hour.day === day && hour.value === newHour.value);
+    // Format the hours and minutes to always have leading zeros
+    const formattedFromHour = String(fromHour).padStart(2, '0');
+    const formattedFromMinute = String(fromMinute).padStart(2, '0');
+    const formattedToHour = String(toHour).padStart(2, '0');
+    const formattedToMinute = String(toMinute).padStart(2, '0');
 
-    if (exists) {
-      setError('Time range already exists for this day');
+    const newHour = { day, value: `${formattedFromHour}:${formattedFromMinute} - ${formattedToHour}:${formattedToMinute}` };
+
+    const isOverlapping = selectedHours.some(hour => {
+      if (hour.day !== day) return false;
+      const [existingFrom, existingTo] = hour.value.split(' - ');
+
+      const existingFromHour = parseInt(existingFrom.split(':')[0], 10);
+      const existingFromMinute = parseInt(existingFrom.split(':')[1], 10);
+      const existingToHour = parseInt(existingTo.split(':')[0], 10);
+      const existingToMinute = parseInt(existingTo.split(':')[1], 10);
+
+      // Convert existing times to minutes since start of day
+      let existingFromMinutes = existingFromHour * 60 + existingFromMinute;
+      let existingToMinutes = existingToHour * 60 + existingToMinute;
+
+      // Handle midnight wrap-around for existing times
+      if (existingToMinutes === 0) {
+        existingToMinutes = 24 * 60; // 24:00 in minutes
+      }
+
+      const isStartOverlap = fromMinutes < existingToMinutes && fromMinutes >= existingFromMinutes;
+      const isEndOverlap = toMinutes > existingFromMinutes && toMinutes <= existingToMinutes;
+      const isEnclosingOverlap = fromMinutes <= existingFromMinutes && toMinutes >= existingToMinutes;
+
+      return isStartOverlap || isEndOverlap || isEnclosingOverlap;
+    });
+
+    if (isOverlapping) {
+      setError('Time range overlaps with existing range for this day');
     } else {
       setError('');
       setSelectedHours(prevHours => [...prevHours, newHour]);
     }
   };
 
+
   const onRemoveHour = (day: string, hour: string) => {
-    setSelectedHours((prevHours: HourTypes[]) => {
+    setSelectedHours((prevHours: any) => {
       // Find the index of the hour that matches the specified day and hour
-      const hourIndex = prevHours.findIndex(hours => hours.day === day && hours.value === hour);
+      const hourIndex = prevHours.findIndex((hours: any) => hours.day === day && hours.value === hour);
       if (hourIndex > -1) {
         // Create a copy of the previous hours array
         const updatedHours = [...prevHours];

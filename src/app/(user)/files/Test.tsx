@@ -15,7 +15,7 @@ import {
 
 import Name, { TnameSchema } from "@/components/ui/custom/Name";
 import { ChangeEvent, useState } from "react";
-import { createFolder, deleteFolder } from "../user.actions";
+import { createFolder, deleteFolder } from "@/actions/user.actions";
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import { Label } from "@/components/ui/Lable"
@@ -41,7 +41,7 @@ export default function Test({ folders, userId }: Ttest) {
     }
 
     const handleRedirect = (folderId: number) => {
-        router.push(`/user/files/${folderId}`)
+        router.push(`/files/${folderId}`)
     }
 
     const hadnleDelete = async (folderId: number) => {

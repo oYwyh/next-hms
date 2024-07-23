@@ -1,10 +1,12 @@
+import AppointmentContextProvider from "@/Providers/AppointmentContext";
+
 import type { Metadata } from "next";
 import { Inter as FontSans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 
 import { cn } from "@/lib/utils";
-import { ClientStuffProvider } from "./ClientStuffProvider";
+import { ReactQueryProvider } from "@/Providers/ReactQuery";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -31,9 +33,11 @@ export default function RootLayout({
         style={{ background: "#343A40" }}
       >
         <Toaster />
-        <ClientStuffProvider>
-          {children}
-        </ClientStuffProvider>
+        <ReactQueryProvider>
+          <AppointmentContextProvider>
+            {children}
+          </AppointmentContextProvider>
+        </ReactQueryProvider>
 
       </body>
     </html>

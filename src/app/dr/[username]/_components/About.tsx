@@ -1,4 +1,4 @@
-import { TDoctor } from "@/lib/types";
+import { TDoctor } from "@/types/index.types";
 import { Info } from "lucide-react";
 
 export default function About({ doctor }: { doctor: TDoctor }) {

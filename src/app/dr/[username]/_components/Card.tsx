@@ -1,7 +1,7 @@
 'use client'
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
-import { TDoctor, TReview, TUser } from "@/lib/types";
+import { TDoctor, TReview, TUser } from "@/types/index.types";
 import { useEffect, useState } from "react";
 import { Rating } from "react-simple-star-rating";
 

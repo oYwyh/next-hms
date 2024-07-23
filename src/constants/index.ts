@@ -1,7 +1,7 @@
 
 import { CalendarOff, CheckCheck, Loader } from "lucide-react";
 
-export const roles = ['admin', 'doctor', 'user']
+export const roles: string[] = ['admin', 'doctor', 'user', 'receptionist']
 
 export const statuses = [
     {
@@ -37,4 +37,14 @@ export const statusOpt = [
     { label: "pending", color: "gold" },
     { label: "completed", color: "lightgreen" },
     { label: "cancelled", color: "red" },
+]
+
+export const specialties = [
+    { label: "General Surgery", value: "general_surgery" },
+    { label: "Podo", value: "podo" },
+    { label: "Orthopedics", value: "orthopedics" },
+]
+
+export const receptionistDepartments = [
+    { label: "OPD", value: "opd" },
 ]

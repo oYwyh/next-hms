@@ -1,9 +1,9 @@
 "use client";
 
-import { InsertedCredit, TloginSchema, loginSchema } from "@/app/auth/types";
+import { InsertedCredit, TloginSchema, loginSchema } from "@/types/auth.types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { login } from "@/actions/auth/auth.actions";
+import { login } from "@/actions/auth.actions";
 import { Form } from "@/components/ui/Form";
 import FormField from "@/components/ui/custom/FormField";
 import { Button } from "@/components/ui/Button";
@@ -35,7 +35,7 @@ export default function Login({ insertedCredit }: { insertedCredit: InsertedCred
           <FormField form={form} name="column" type={'hidden'} disabled={true} defaultValue={insertedCredit.column} />
           <FormField form={form} name="credit" disabled={true} defaultValue={insertedCredit.credit} />
           <FormField form={form} name="password" />
-          <Button type="submit">Login</Button>
+          <Button className="mt-3 w-full" type="submit">Login</Button>
         </form>
       </Form>
     </>
