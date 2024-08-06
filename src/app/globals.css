@@ -70,7 +70,13 @@
     * {
         @apply border-border;
     }
+
     body {
         @apply bg-background text-foreground;
     }
+}
+
+/* Calender select year stuff */
+.rdp-vhidden {
+    @apply hidden;
 }

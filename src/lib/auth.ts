@@ -28,7 +28,7 @@ export const lucia = new Lucia(adapter, {
       email: attributes.email,
       phone: attributes.phone,
       nationalId: attributes.nationalId,
-      age: attributes.age,
+      dob: attributes.dob,
       gender: attributes.gender,
       picture: attributes.picture,
       role: attributes.role,
@@ -40,7 +40,7 @@ export const lucia = new Lucia(adapter, {
 
 export const validateRequest = cache(
   async (): Promise<
-    { user: User; session: Session } | { user: null; session: null }
+    { user: TUser; session: Session } | { user: null; session: null }
   > => {
     const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
     if (!sessionId) {
@@ -82,28 +82,4 @@ declare module "lucia" {
 }
 
 
-interface DatabaseUserAttributes {
-  id: string;
-  firstname: string;
-  lastname: string;
-  username: string;
-  email: string;
-  phone: string;
-  nationalId: string;
-  age: string;
-  gender: 'male' | 'female';
-  picture: string;
-  role: string;
-  createdAt: string;
-  updatedAt: string;
-  admin?: {
-    id: string | number;
-    super: boolean;
-    userId: string;
-  }
-  doctor?: {
-    id: string | number;
-    specialty: string;
-    userId: string;
-  }
-}
+type DatabaseUserAttributes = TUser;

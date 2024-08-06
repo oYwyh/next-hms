@@ -30,7 +30,7 @@ import {
   CommandSeparator,
 } from "@/components/ui/Command";
 import { Label } from "./Lable";
-import { THours } from "@/types/index.types";
+import { THour } from "@/types/index.types";
 
 const multiSelectVariants = cva(
   "m-1 transition ease-in-out delay-150 hover:-translate-y-1 hover:scale-110 duration-300",
@@ -60,11 +60,8 @@ interface MultiSelectProps
     value: string;
     icon?: React.ComponentType<{ className?: string }>;
   }[];
-  selectedHours?: { day: string; value: string }[] | undefined;
-  setSelectedHours?: ((value: {
-    day: string;
-    value: string;
-  }[]) => void | undefined) | undefined;
+  selectedHours?: THour[] | undefined;
+  setSelectedHours?: ((value: THour[]) => void | undefined) | undefined;
   onValueChange: (value: string[]) => void;
   defaultValue: string[];
   label?: string,

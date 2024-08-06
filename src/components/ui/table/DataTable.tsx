@@ -36,7 +36,8 @@ interface DataTableProps<TData, TValue> {
   data: TData[],
   hiddenColumns?: string[],
   restrictedColumns?: string[],
-  search?: string
+  search?: string,
+  filters?: { column: string, options: { label: string, value: string }[] }[]
 }
 
 export function DataTable<TData, TValue>({
@@ -45,6 +46,7 @@ export function DataTable<TData, TValue>({
   hiddenColumns,
   restrictedColumns,
   search = 'email',
+  filters,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -93,7 +95,7 @@ export function DataTable<TData, TValue>({
             }}
             className="max-w-sm"
           />
-          <DataTableToolbar table={table} />
+          <DataTableToolbar table={table} filters={filters} />
         </div>
         <DataTableViewOptions table={table} restrictedColumns={restrictedColumns} />
 

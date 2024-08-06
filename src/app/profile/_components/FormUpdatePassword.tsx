@@ -10,19 +10,12 @@ import toast from "react-hot-toast";
 import { useState } from "react";
 import { passwordSchema, TpasswordSchema } from "@/types/dashboard.types";
 
-type FormUpdatePasswordTypes = {
-  id: string;
-}
-
-export default function FormUpdateProfile({ id }: FormUpdatePasswordTypes) {
+export default function FormUpdateProfile() {
 
   const [empty, setEmpty] = useState<boolean>(false)
 
   const form = useForm<TpasswordSchema>({
     resolver: zodResolver(passwordSchema),
-    defaultValues: {
-      id
-    }
   });
 
   const onSubmit = async (data: TpasswordSchema) => {
@@ -37,7 +30,6 @@ export default function FormUpdateProfile({ id }: FormUpdatePasswordTypes) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        <FormField form={form} name="id" type={'hidden'} />
         <div className="flex flex-row gap-3 pb-2">
           {empty ? (
             <>

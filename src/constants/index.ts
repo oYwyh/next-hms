@@ -2,6 +2,8 @@
 import { CalendarOff, CheckCheck, Loader } from "lucide-react";
 
 export const roles: string[] = ['admin', 'doctor', 'user', 'receptionist']
+export const genders: string[] = ['male', 'female'] as const
+export const uniqueColumns = ["email", "phone", "nationalId", "username"] as const
 
 export const statuses = [
     {

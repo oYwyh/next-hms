@@ -6,25 +6,20 @@ import { Form, FormMessage } from "@/components/ui/Form";
 import { TbaseSchema } from "@/types/index.types";
 import { UseFormReturn } from "react-hook-form";
 
-type ManageFormTypes = {
-    operation: 'add' | 'edit',
+type TManagaPassword = {
     form: UseFormReturn<TpasswordSchema>,
     onSubmit: (data: TpasswordSchema) => Promise<void>;
-    error: string | null;
 }
 
 export default function ManagePassword({
-    operation,
     form,
     onSubmit,
-    error,
-}: ManageFormTypes) {
+}: TManagaPassword) {
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
                 <FormField form={form} name="password" />
                 <FormField form={form} name="confirmPassword" />
-                {error && <FormMessage>{error}</FormMessage>}
                 <DialogFooter className="pt-4">
                     <Button type="submit">Save changes</Button>
                 </DialogFooter>

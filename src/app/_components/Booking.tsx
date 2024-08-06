@@ -7,6 +7,7 @@ import { Form } from "@/components/ui/Form";
 import { useForm } from "react-hook-form";
 import DoctorCard from '@/app/_components/appointment/drCard';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { specialties } from '@/constants';
 
 export default function Booking() {
     const [specialty, setSpecialty] = useState<string>('all');
@@ -15,7 +16,7 @@ export default function Booking() {
     const [doctorsList, setDoctorsList] = useState<[]>([]);
     const queryClient = useQueryClient();
 
-    const { data: QdoctorsList, isLoading: isDoctorListLoading } = useQuery({
+    const { data: QdoctorsList, isLoading: isDoctorsListLoading } = useQuery({
         queryKey: ['doctors', 'list', specialty],
         queryFn: async () => {
             const response = await fetch(`/api/doctors/list/${specialty}`);
@@ -48,7 +49,7 @@ export default function Booking() {
     const { data: user } = useQuery({
         queryKey: ['user', 'id'],
         queryFn: async () => {
-            const response = await fetch('/api/global/user');
+            const response = await fetch('/api/global/user');;
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
@@ -82,9 +83,7 @@ export default function Booking() {
 
     const specialtyOpts = [
         { label: "All Speicalties", value: "all" },
-        { label: "General Surgery", value: "general_surgery" },
-        { label: "Podo", value: "podo" },
-        { label: "Orthopedics", value: "orthopedics" },
+        ...specialties,
     ]
 
     return (
@@ -93,7 +92,7 @@ export default function Booking() {
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <div className="flex flex-row gap-2 items-center w-fit">
                         <FormField form={form} name="specialty" select="specialty" specialties={specialtyOpts} setState={setSpecialty} />
-                        {isDoctorListLoading ? (
+                        {isDoctorsListLoading ? (
                             <>Loading...</>
                         ) : (
                             <>

@@ -15,21 +15,23 @@ export default async function ProfilePage() {
             user={user}
           />
           <FormUpdateProfile
-            id={user.id}
-            username={user.username}
-            email={user.email}
+            user={user}
+          // id={user.id}
+          // username={user.username}
+          // email={user.email}
           />
           <FormUpdatePersonal
-            id={user.id}
-            firstname={user.firstname}
-            lastname={user.lastname}
-            phone={user.phone}
-            nationalId={user.nationalId}
-            age={user.age}
-            gender={user.gender}
+            user={user}
+          // id={user.id}
+          // firstname={user.firstname}
+          // lastname={user.lastname}
+          // phone={user.phone}
+          // nationalId={user.nationalId}
+          // age={user.age}
+          // gender={user.gender}
           />
           <FormUpdatePassword
-            id={user.id}
+            user={user}
           />
         </div>
       ) : (

@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/DropdownMenu"
 import { DataTableColumnHeader } from "@/components/ui/table/DataTableColumnHeader"
 import { baseColumns, BaseColumnsTypes, SwitchTableColumn, SelectTableColumn, ExportTableColumn } from "@/constants/columns"
-import { ReceptionistDepartments, TWorkHours } from "@/types/index.types"
+import { ReceptionistDepartments, TWorkHour } from "@/types/index.types"
 import Actions from "@/app/dashboard/_components/admin/Actions"
 
 
@@ -46,12 +46,12 @@ const ActionsTableColumn = [
             const workTimeColumnExists = table.getAllColumns().some((column: Column<any>) => column.id === "workTime");
 
             let rowData = {};
-            if (workTimeColumnExists && row.getValue('role') == 'doctor') {
+            if (row.getValue('table') == 'doctor' && workTimeColumnExists) {
                 rowData = doctorColumns.reduce((acc: { [key: string]: DoctorColumnsTypes }, column: string) => {
                     acc[column] = row.getValue(column);
                     return acc;
                 }, {});
-            } else if (row.getValue('role') == 'receptionist') {
+            } else if (row.getValue('table') == 'receptionist') {
                 rowData = receptionistColumns.reduce((acc: { [key: string]: ReceptionistColumnsTypes }, column: string) => {
                     acc[column] = row.getValue(column);
                     return acc;
@@ -73,7 +73,6 @@ const ActionsTableColumn = [
 
 const WithPrivileges = [
     ...ActionsTableColumn,
-    ...ExportTableColumn,
 ]
 
 export const DoctorTableColumns: ColumnDef<DoctorColumnsTypes>[] = [
@@ -100,7 +99,7 @@ export const DoctorTableColumns: ColumnDef<DoctorColumnsTypes>[] = [
             )
         },
         cell: ({ cell, row }) => {
-            const workTime: { day: string; workHour: TWorkHours }[] = row.getValue('workTime')
+            const workTime: { day: string; workHour: TWorkHour }[] = row.getValue('workTime')
 
             if (!workTime) {
                 throw new Error('Work time not found')
@@ -152,6 +151,7 @@ export const DoctorTableColumns: ColumnDef<DoctorColumnsTypes>[] = [
             )
         },
     },
+    ...ExportTableColumn,
 ];
 
 export const UserTableColumns: ColumnDef<UserColumnsTypes>[] = [
@@ -164,6 +164,7 @@ export const UserTableColumns: ColumnDef<UserColumnsTypes>[] = [
             )
         },
     })),
+    ...ExportTableColumn,
 ];
 
 export const AdminTableColumns: ColumnDef<AdminColmnsTypes>[] = [
@@ -176,6 +177,7 @@ export const AdminTableColumns: ColumnDef<AdminColmnsTypes>[] = [
             )
         },
     })),
+    ...ExportTableColumn,
 ];
 
 export const ReceptionistTableColumns: ColumnDef<ReceptionistColumnsTypes>[] = [

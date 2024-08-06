@@ -9,15 +9,16 @@ import { AppointmentContext } from "@/context/appointment.context";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
 import { getDateByDayName } from "@/lib/funcs";
 import Add from "@/app/dashboard/_components/admin/Add";
+import { TDoctor, TUser, TWorkDay } from "@/types/index.types";
 
-export default function DoctorCard({ doctor, userId }: { doctor: any, userId?: string }) {
+export default function DoctorCard({ doctor: { user, doctor, workDays }, userId }: { doctor: { user: TUser, doctor: TDoctor, workDays: TWorkDay[] }, userId?: string }) {
     const router = useRouter()
     const context = useContext(AppointmentContext);
 
     const onSubmit = async (doctorId: number, date: string, from: string, to: string) => {
         if (userId) {
 
-            const result = await book(userId, doctorId, date, from, to);
+            const result = await book({ userId, doctorId, date, from, to });
             console.log("Booking result:", result);
 
             if (context) {
@@ -32,7 +33,7 @@ export default function DoctorCard({ doctor, userId }: { doctor: any, userId?: s
     }
 
     const onDrPage = async () => {
-        const doctorUsername = doctor.user.username
+        const doctorUsername = user.username
         router.push('dr/' + doctorUsername)
     }
 
@@ -47,7 +48,7 @@ export default function DoctorCard({ doctor, userId }: { doctor: any, userId?: s
             </div>
             <div>
                 <Avatar className="z-20 w-[100px] h-[100px] rounded-full border-solid border-black border-1">
-                    <AvatarImage src={doctor.user.picture ? `${process.env.NEXT_PUBLIC_R2_FILES_URL}/${doctor.user.picture}` : 'default.jpg'} />
+                    <AvatarImage src={user.picture ? `${process.env.NEXT_PUBLIC_R2_FILES_URL}/${user.picture}` : 'default.jpg'} />
                     <AvatarFallback>CN</AvatarFallback>
                 </Avatar>
             </div>
@@ -56,9 +57,9 @@ export default function DoctorCard({ doctor, userId }: { doctor: any, userId?: s
                     <div className="flex flex-col gap-0">
                         <div className="flex flex-row gap-1 items-baseline text-[#0070CD]">
                             <span className="text-[14px] z-20">Doctor</span>
-                            <p className="text-[21px] z-20">{doctor.user.firsname} {doctor.user.lastname}</p>
+                            <p className="text-[21px] z-20">{user.firstname} {user.lastname}</p>
                         </div>
-                        <p className="text-sm text-[#87888B] min-w-[650px] z-20">Professor and Consultant  of {doctor.doctor.specialty} & Cardiovascular diseases  - AL Azhar university</p>
+                        <p className="text-sm text-[#87888B] min-w-[650px] z-20">Professor and Consultant  of {doctor.specialty} & Cardiovascular diseases  - AL Azhar university</p>
                     </div>
                     <div className="flex flex-col gap-0">
                         <div className="flex flex-row gap-1 z-20">
@@ -74,7 +75,7 @@ export default function DoctorCard({ doctor, userId }: { doctor: any, userId?: s
                 <div className="flex flex-col gap-2">
                     <div className="flex flex-row gap-1 items-end text-[#0070CD]">
                         <Stethoscope size="17" className="z-20 border-solid border-2 border-red-500 border-t-0 border-l-0 border-r-0" />
-                        <p className="z-20 text-[14px]">{doctor.doctor.specialty}</p>
+                        <p className="z-20 text-[14px]">{doctor.specialty}</p>
                     </div>
                     <div className="flex flex-row gap-1 items-end text-[#0070CD]">
                         <Wallet size="17" className="z-20 border-solid border-2 border-red-500 border-t-0 border-l-0 border-r-0" />
@@ -84,7 +85,7 @@ export default function DoctorCard({ doctor, userId }: { doctor: any, userId?: s
             </div>
             <div className="flex flex-col gap-2">
                 {/* <pre>{JSON.stringify(doctor, null, 2)}</pre> */}
-                {doctor.workDays.map((day: any) => {
+                {workDays.map((day: any) => {
                     var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
                     var date = new Date();
                     var dayName = days[date.getDay()].toLowerCase();
@@ -105,17 +106,12 @@ export default function DoctorCard({ doctor, userId }: { doctor: any, userId?: s
                                             <p className="text-[14px] z-20">To: {hour.to}</p>
                                         </div>
                                         {userId ? (
-                                            <Button className="z-20" onClick={() => onSubmit(doctor.doctor.id, getDateByDayName(day.day), hour.from, hour.to)}>
+                                            <Button className="z-20" onClick={() => onSubmit(doctor.id, getDateByDayName(day.day), hour.from, hour.to)}>
                                                 Book
                                             </Button>
                                         ) : (
                                             <div className="z-20">
-                                                <Add role={'user'} withAppointment={{
-                                                    doctorId: doctor.doctor.id,
-                                                    date: getDateByDayName(day.day),
-                                                    from: hour.from,
-                                                    to: hour.to
-                                                }}
+                                                <Add role={'user'}
                                                 />
                                             </div>
                                         )}

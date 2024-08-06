@@ -2,141 +2,149 @@ import db from "@/lib/db";
 import { adminTable, doctorTable, receptionistTable, userTable, workDaysTable, workHoursTable } from "@/lib/db/schema";
 import { sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { TaddSchema, TeditSchema } from "@/types/dashboard.types";
-import { ReceptionistDepartments, THours, UserRoles } from "@/types/index.types";
+import { TAddSchema, TEditSchema } from "@/types/operations.types";
+import { ReceptionistDepartments, THour, UserRoles } from "@/types/index.types";
 
 
-export async function doctorRole(
-  data: TeditSchema | TaddSchema,
-  userRole: UserRoles = "doctor",
-  selectedDays: string[] | undefined,
-  selectedHours: THours | undefined,
+export async function doctorRole({
+  data,
+  selectedDays,
+  selectedHours,
+  userId,
+  operation,
+}: {
+  data: TEditSchema | TAddSchema,
+  selectedDays: string[],
+  selectedHours: THour[],
   userId: string,
-  operation?: "add" | "edit",
-) {
-  if (userRole === "doctor") {
-    const { specialty } = data;
+  operation: "add" | "edit"
+}) {
+  const { specialty } = data;
 
-
-    if (!selectedDays || !selectedHours) {
-      throw new Error("Please select days and hours");
+  const groupedHours = selectedHours.reduce((acc, { day: selectedDay, value }) => {
+    if (!acc[selectedDay]) {
+      acc[selectedDay] = [];
     }
+    acc[selectedDay].push(value);
+    return acc;
+  }, {} as Record<string, THour["value"][]>);
 
-    const groupedHours = selectedHours.reduce((acc, hour) => {
-      if (!acc[hour.day]) {
-        acc[hour.day] = [];
+  /*
+    console.log(selectedHours)
+    console.log(groupedHours)
+    [
+      { day: 'wednesday', value: { from: '03:00', to: '05:00' } },
+      { day: 'wednesday', value: { from: '02:00', to: '03:00' } }
+    ]
+    {
+      wednesday: [ { from: '03:00', to: '05:00' }, { from: '02:00', to: '03:00' } ]
+    }
+  */
+
+  if (operation == 'add' && userId) {
+    const doctor = await db.insert(doctorTable).values({
+      userId: userId,
+      specialty: specialty,
+    }).returning({ id: doctorTable.id });
+
+    for (const day of selectedDays) {
+      const workDay = await db.insert(workDaysTable).values({
+        doctorId: Number(doctor[0].id),
+        day: day
+      }).returning({ id: workDaysTable.id, day: workDaysTable.day });
+
+      if (groupedHours[day]) {
+        for (const timeRange of groupedHours[day]) {
+          console.log(timeRange)
+          await db.insert(workHoursTable).values({
+            workDayId: Number(workDay[0].id),
+            from: timeRange.from,
+            to: timeRange.to
+          });
+        }
       }
-      acc[hour.day].push(hour.value);
-      return acc;
-    }, {} as Record<string, string[]>);
+    }
+  } else if (operation == 'edit' && userId) {
+    const doctor = await db.select({ id: doctorTable.id }).from(doctorTable).where(sql`${doctorTable.userId} = ${userId}`);
 
-    if (operation == 'add' && userId) {
-      const doctor = await db.insert(doctorTable).values({
-        userId: userId,
+    if (specialty) {
+      await db.update(doctorTable).set({
         specialty: specialty,
-      }).returning({ id: doctorTable.id });
+      }).where(sql`${doctorTable.userId} = ${userId}`).returning();
+    }
 
-      for (const day of selectedDays) {
-        const workDay = await db.insert(workDaysTable).values({
-          doctorId: Number(doctor[0].id),
-          day: day
-        }).returning({ id: workDaysTable.id, day: workDaysTable.day });
+    const workDay = await db.delete(workDaysTable).where(sql`${workDaysTable.doctorId} = ${doctor[0].id}`).returning();
+    await db.delete(workHoursTable).where(sql`${workHoursTable.workDayId} = ${workDay[0].id}`);
 
-        if (groupedHours[day]) {
-          for (const timeRange of groupedHours[day]) {
-            const [from, to] = timeRange.split('-').map(time => time.trim());
-            await db.insert(workHoursTable).values({
-              workDayId: Number(workDay[0].id),
-              from: from,
-              to: to
-            });
-          }
-        }
-      }
-    } else if (operation == 'edit' && userId) {
-      const doctor = await db.select({ id: doctorTable.id }).from(doctorTable).where(sql`${doctorTable.userId} = ${userId}`);
+    for (const day of selectedDays) {
+      const workDay = await db.insert(workDaysTable).values({
+        doctorId: Number(doctor[0].id),
+        day: day
+      }).returning({ id: workDaysTable.id, day: workDaysTable.day });
 
-      if (specialty) {
-        await db.update(doctorTable).set({
-          specialty: specialty,
-        }).where(sql`${doctorTable.userId} = ${userId}`).returning();
-      }
-
-      const workDay = await db.delete(workDaysTable).where(sql`${workDaysTable.doctorId} = ${doctor[0].id}`).returning();
-      await db.delete(workHoursTable).where(sql`${workHoursTable.workDayId} = ${workDay[0].id}`);
-
-      for (const day of selectedDays) {
-        const workDay = await db.insert(workDaysTable).values({
-          doctorId: Number(doctor[0].id),
-          day: day
-        }).returning({ id: workDaysTable.id, day: workDaysTable.day });
-
-        if (groupedHours[day]) {
-          for (const timeRange of groupedHours[day]) {
-            const [from, to] = timeRange.split('-').map(time => time.trim());
-            console.log(`Start: ${from}, End: ${to}`);
-            await db.insert(workHoursTable).values({
-              workDayId: Number(workDay[0].id),
-              from: from,
-              to: to
-            });
-          }
+      if (groupedHours[day]) {
+        for (const timeRange of groupedHours[day]) {
+          await db.insert(workHoursTable).values({
+            workDayId: Number(workDay[0].id),
+            from: timeRange.from,
+            to: timeRange.to
+          });
         }
       }
     }
-
-    revalidatePath('/dashboard/doctors');
-    return {
-      done: true,
-    };
   }
-  return;
+
+  revalidatePath('/dashboard/doctors');
+  return {
+    success: true,
+  };
 }
 
-export const adminRole = async (
-  data: TeditSchema | TaddSchema,
-  userRole: UserRoles = "admin",
-  userId: string,
-  operation?: "add" | "edit",
-) => {
-  if (userRole == 'admin') {
-    if (operation == 'add') {
-      await db.insert(adminTable).values({
-        userId: userId,
-      })
-    }
-
-    revalidatePath('/dashboard/admins');
-    return {
-      done: true,
-    };
+export const adminRole = async ({
+  data,
+  userId,
+  operation
+}: {
+  data: TEditSchema | TAddSchema;
+  userId: string;
+  operation?: "add" | "edit";
+}) => {
+  if (operation == 'add') {
+    await db.insert(adminTable).values({
+      userId: userId,
+    })
   }
-  return;;
+
+  revalidatePath('/dashboard/admins');
+  return {
+    success: true,
+  };
 }
 
-export const receptionistRole = async (
-  data: TeditSchema | TaddSchema,
-  userRole: UserRoles = "receptionist",
-  userId: string,
-  operation?: "add" | "edit",
-) => {
-  if (userRole == 'receptionist') {
-    if (operation == 'add') {
-      await db.insert(receptionistTable).values({
-        department: data.receptionistDepartment as ReceptionistDepartments,
-        userId: userId,
-      })
-    } else if (operation == 'edit') {
-      if (data.department) {
-        await db.update(receptionistTable).set({
-          department: data.receptionistDepartment as ReceptionistDepartments,
-        }).where(sql`${receptionistTable.userId} = ${userId}`).returning();
-      }
+export const receptionistRole = async ({
+  data,
+  userId,
+  operation
+}: {
+  data: TEditSchema | TAddSchema;
+  userId: string;
+  operation?: "add" | "edit";
+}) => {
+  if (operation == 'add') {
+    await db.insert(receptionistTable).values({
+      department: data.department as ReceptionistDepartments,
+      userId: userId,
+    })
+  } else if (operation == 'edit') {
+    if (data.department) {
+      await db.update(receptionistTable).set({
+        department: data.department as ReceptionistDepartments,
+      }).where(sql`${receptionistTable.userId} = ${userId}`).returning();
     }
   }
 
   revalidatePath('/dashboard/receptionists');
   return {
-    done: true,
+    success: true,
   };
 }

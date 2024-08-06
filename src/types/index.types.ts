@@ -2,12 +2,14 @@ import { roles } from "@/constants";
 import { z } from "zod";
 
 export type AppointmentStatus = "pending" | "completed" | "canceled";
+export type UniqueColumns = 'email' | 'phone' | 'nationalId' | 'username'
 export type ReceptionistDepartments = "opd";
 export type UserRoles = "admin" | "user" | "doctor" | 'receptionist';
-export type Gender = "male" | "female";
 export type Prescriptions = 'laboratory' | 'radiology' | 'medicine';
-
-export type THours = { day: string; value: string }[];
+export type THour = { day: string; value: { from: string; to: string } };
+export type TGenders = 'male' | 'female'
+export type TTables = "admin" | "doctor" | "user" | "receptionist" | "appointment" | "prescription" | "review";
+export type TIndex<T> = { [key: string]: T }
 
 export type TUser = {
   id: string;
@@ -17,39 +19,42 @@ export type TUser = {
   email: string;
   phone: string;
   nationalId: string;
-  age: number;
-  gender: string;
+  dob: string;
+  gender: TGenders;
   picture: string;
   role: string;
   createdAt: Date;
   updatedAt: Date;
+  doctor?: TDoctor;
+  admin?: TAdmin;
+  receptionist?: TReceptionist;
 };
 
-export type TDoctor = TUser & {
+export type TDoctor = {
   id: number;
   specialty: string;
   userId: string;
 };
 
-export type TAdmin = TUser & {
+export type TAdmin = {
   id: number;
   super: boolean;
   userId: string;
 };
 
-export type TReceptionist = TUser & {
+export type TReceptionist = {
   id: number;
   type: ReceptionistDepartments;
   userId: string;
 };
 
-export type TWorkDays = {
+export type TWorkDay = {
   id: number;
   doctorId: number;
   day: string;
 };
 
-export type TWorkHours = {
+export type TWorkHour = {
   id: number;
   workDayId: number;
   from: string;
@@ -120,6 +125,14 @@ export type TSession = {
   expiresAt: string;
 };
 
+export const uniqueColumnsRegex: { [key: string]: RegExp } = {
+  email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+  phone: /^01[0-2,5]{1}[0-9]{8}$/,
+  nationalId: /^[2-3]{1}[0-9]{13}$/,
+  username: /^[a-zA-Z0-9_-]{1,16}$/,
+}
+
+
 export const baseSchema = z.object({
   id: z.string().optional(),
   firstname: z.string().min(1, "Firstname is required"),
@@ -128,15 +141,19 @@ export const baseSchema = z.object({
   email: z.string().email(),
   phone: z.string(),
   nationalId: z.string(),
-  age: z.string().refine((e) => {
-    const age = parseInt(e);
-    return age >= 18;
-  }, 'Age must be greater than or equal to 18'),
-  gender: z.enum(["male", "female"]),
+  dob: z.date(),
+  gender: z.enum(['male', 'female']),
   picture: z.string().optional(),
   role: z.enum(roles as [UserRoles]).optional(),
-  password: z.string().min(3, "Password must be at least 3 characters").optional(),
-  confirmPassword: z.string().min(3, "Password must be at least 3 characters").optional(),
 })
 
 export type TbaseSchema = z.infer<typeof baseSchema>;
+
+export const uniqueColumnsSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  email: z.string().email("Invalid email"),
+  phone: z.string().min(1, "Phone Number is required"),
+  nationalId: z.string().min(1, "National Id is required"),
+})
+
+export type TUniqueColumnsSchema = Partial<z.infer<typeof uniqueColumnsSchema>>;

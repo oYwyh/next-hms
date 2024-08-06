@@ -1,3 +1,6 @@
+import { TIndex } from "@/types/index.types";
+import { UseFormReturn } from "react-hook-form";
+
 export function getDateByDayName(dayName: string) {
     const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'faturday'];
     const today = new Date();
@@ -32,3 +35,38 @@ export function generateRandomPassword() {
 
     return prefix + randomString;
 }
+
+export const normalizeDataFields = (data: any) => {
+    Object.entries(data).forEach(([key, value]) => {
+        if (typeof value === 'string') {
+            data[key] = value.toLowerCase();
+        }
+    });
+};
+
+export const handleError = (form: UseFormReturn<any>, error: Record<string, string>) => {
+    for (const [field, message] of Object.entries(error)) {
+        form.setError(field, {
+            type: "server",
+            message: message,
+        });
+    }
+};
+
+export const compareFields = (data: TIndex<string> & any, userData: TIndex<string> & any, ignoredFields: string[] = []) => {
+    const userFields = Object.keys(userData).filter(field => !ignoredFields?.includes(field));
+    const unChangedFields: string[] = [];
+    const changedFields: string[] = [];
+
+    userFields.forEach(field => {
+        if (typeof data[field] == 'string' && typeof userData[field] == 'string') {
+            if (data[field]?.toLowerCase() !== userData[field]?.toLowerCase()) {
+                changedFields.push(field);
+            } else {
+                unChangedFields.push(field);
+            }
+        }
+    });
+
+    return { changedFields, unChangedFields };
+};

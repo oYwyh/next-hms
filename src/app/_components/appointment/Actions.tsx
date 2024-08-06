@@ -6,6 +6,7 @@ import { Row } from "@tanstack/react-table";
 import { useQuery } from "@tanstack/react-query";
 import Cancel from "./Cancel";
 import Link from "next/link";
+import Delete from "@/app/dashboard/_components/admin/Delete";
 
 export default function Actions({ row }: { row: Row<any> }) {
     const appointmentId: string | number = row.getValue("id");
@@ -65,8 +66,9 @@ export default function Actions({ row }: { row: Row<any> }) {
                                 </Link>
                             )}
                             {status != 'completed' && (
-                                <Cancel
-                                    appointmentId={appointmentId}
+                                <Delete
+                                    id={appointmentId}
+                                    table="appointment"
                                     setPopOpen={setOpen}
                                 />
                             )}

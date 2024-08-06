@@ -1,10 +1,10 @@
 "use client";
 
 import { useForm } from "react-hook-form";
-import { InsertedCredit, TcheckSchema, checkSchema } from "@/types/auth.types";
+import { InsertedCredential, TCheckSchema, checkSchema } from "@/types/auth.types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { checkCredit } from "@/actions/auth.actions";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Login from "./_components/login";
 import Register from "./_components/register";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -15,35 +15,45 @@ import {
   Form,
   FormMessage,
 } from "@/components/ui/Form";
+import { UniqueColumns } from "@/types/index.types";
+import { destroyDb, seed } from "@/lib/db/seed";
+import { Bean, Trash2 } from "lucide-react";
 
 export default function AuthPage() {
-  const [error, setError] = useState<string>('');
-  const [creditExist, setCreditExist] = useState<boolean>();
-  const [credit, setCredit] = useState<InsertedCredit | null>();
+  const [creditExists, setCreditExists] = useState<boolean>();
+  const [credential, setCredential] = useState<InsertedCredential | null>();
 
-  const form = useForm<TcheckSchema>({
+  const form = useForm<TCheckSchema>({
     resolver: zodResolver(checkSchema),
   });
 
-  const onSubmit = async (data: TcheckSchema) => {
+  const onSubmit = async (data: TCheckSchema) => {
     const result = await checkCredit(data);
 
+    console.log(result)
 
     if (result?.column != 'unknown') {
-      setCredit({
-        column: result?.column as 'email' | 'phone' | 'nationalId' | 'username',
-        credit: data.credit,
+      setCredential({
+        column: result?.column as UniqueColumns,
+        credential: data.credential,
       });
-      if (result?.exist === false) {
-        setCreditExist(false);
+      if (result?.exists === false) {
+        setCreditExists(false);
       } else {
-        setCreditExist(true);
+        setCreditExists(true);
       }
     } else {
-      setError('Invalid credential')
+      form.setError('credential', { message: 'Invalid credential' });
     }
-
   };
+
+  const seedAction = async () => {
+    await seed()
+  };
+
+  const destroyAction = async () => {
+    await destroyDb()
+  }
 
   return (
     <div className="w-screen h-screen flex  justify-center items-center">
@@ -58,19 +68,28 @@ export default function AuthPage() {
           </>
         ) : (
           <>
-            {creditExist !== true && creditExist !== false && (
-              <>
+            {creditExists !== true && creditExists !== false && (
+              <div className="flex flex-col gap-3">
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <FormField form={form} name="credit" />
+                    <FormField form={form} name="credential" />
                     <Button className="mt-3 w-full" type="submit">Submit</Button>
-                    {error && <FormMessage>{error}</FormMessage>}
                   </form>
                 </Form>
-              </>
+                <div className="flex flex-col gap-1">
+                  <Button className="flex flex-row-reverse gap-2 mt-5 w-screen" variant={'outline'} onClick={seedAction}>
+                    <Bean size={18} />
+                    Seed
+                  </Button>
+                  <Button className="flex flex-row-reverse gap-2 mt-5 w-screen" variant={'outline'} onClick={destroyAction}>
+                    Destroy Db
+                    <Trash2 size={18} />
+                  </Button>
+                </div>
+              </div>
             )}
-            {creditExist && credit && <Login insertedCredit={credit} />}
-            {creditExist === false && credit && <Register insertedCredit={credit} />}
+            {creditExists && credential && <Login insertedCredential={credential} />}
+            {creditExists === false && credential && <Register insertedCredential={credential} />}
           </>
         )}
       </>

@@ -13,6 +13,7 @@ import {
   time,
   numeric,
   PgTimestampBuilderInitial,
+  date,
 } from "drizzle-orm/pg-core";
 
 export const timestamps = (): {
@@ -39,7 +40,7 @@ export const userTable = pgTable("user", {
   email: text("email").unique().notNull(),
   phone: text("phone").unique().notNull(),
   nationalId: text("nationalId").unique().notNull(),
-  age: text("age").notNull(),
+  dob: text("dob").notNull(), // date of birth
   gender: text("gender").notNull(),
   picture: text("picture").default('default.jpg').notNull(),
   password: text("password").notNull(),
@@ -163,7 +164,6 @@ export const appointmentTable = pgTable("appointment", {
   date: text("date").notNull(),
   from: text("from").notNull(),
   to: text("to").notNull(),
-  // department: enum('icu', 'opd', 'inpatient', 'radiology', 'laboratory', 'emergancy')
   userId: text("userId")
     .references(() => userTable.id, {
       onDelete: "cascade",
@@ -191,7 +191,7 @@ export const appointmentRelation = relations(appointmentTable, ({ one }) => ({
   }),
   doctor: one(doctorTable, {
     fields: [appointmentTable.doctorId],
-    references: [doctorTable.userId],
+    references: [doctorTable.id],
   }),
   review: one(reviewTable, {
     fields: [appointmentTable.id],

@@ -19,7 +19,7 @@ export type BaseColumnsTypes = {
   role: string;
 }
 
-export const baseColumns = ['id', 'firstname', 'lastname', 'username', 'email', 'phone', 'nationalId', 'age', 'gender', 'role']
+export const baseColumns = ['id', 'firstname', 'lastname', 'username', 'email', 'phone', 'nationalId', 'dob', 'gender', 'role', 'table']
 
 export const SelectTableColumn = [
   {

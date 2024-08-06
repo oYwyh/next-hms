@@ -3,7 +3,7 @@
 import { ColumnDef, Row } from "@tanstack/react-table"
 import { DataTableColumnHeader } from "@/components/ui/table/DataTableColumnHeader"
 import { SelectTableColumn, ExportTableColumn } from "@/constants/columns"
-import Actions from "./AppointmentActions"
+import Actions from "./Actions"
 import { AppointmentStatus } from "@/types/index.types"
 import { statusOpt } from "@/constants"
 

@@ -1,87 +1,79 @@
-import { Command, Plus, Trash2 } from "lucide-react";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { TimePicker } from "@/components/ui/custom/TimePicker";
-import { THours } from "@/types/index.types";
+import { Command, Plus, Trash2 } from "lucide-react";
+import { THour } from "@/types/index.types";
 
 type HoursType = {
-  selectedHours: { day: string; value: string }[];
-  setSelectedHours: (value: { day: string; value: string; }[]) => void;
+  selectedHours: THour[];
+  setSelectedHours: (value: THour[]) => void;
   day: string;
-  hoursList: { day: string; value: string }[];
-}
+};
 
-export default function Hours({ selectedHours, setSelectedHours, day, hoursList }: HoursType) {
-  const [hourFrom, setHourFrom] = React.useState<string>('');
-  const [hourTo, setHourTo] = React.useState<string>('');
-  const [error, setError] = React.useState<string>('');
-  const [dateFrom, setDateFrom] = React.useState<Date | undefined>(undefined);
-  const [dateTo, setDateTo] = React.useState<Date | undefined>(undefined);
+export default function Hours({ selectedHours, setSelectedHours, day }: HoursType) {
+  const [hourFrom, setHourFrom] = useState<string>("");
+  const [hourTo, setHourTo] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (dateFrom) {
-      const hours = dateFrom.getHours();
-      const minutes = dateFrom.getMinutes();
-      setHourFrom(`${hours}:${minutes < 10 ? '0' + minutes : minutes}`);
-      console.log(`From: ${hourFrom}`)
+      setHourFrom(formatTime(dateFrom));
     }
     if (dateTo) {
-      const hours = dateTo.getHours();
-      const minutes = dateTo.getMinutes();
-      setHourTo(`${hours}:${minutes < 10 ? '0' + minutes : minutes}`);
-      console.log(`To: ${hourTo}`)
+      setHourTo(formatTime(dateTo));
     }
   }, [dateFrom, dateTo]);
 
-  const onAddHours = () => {
+  const formatTime = (date: Date) => {
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+  };
+
+  const validateTimeRange = () => {
     if (!hourFrom || !hourTo) {
-      setError('Please select from and to time');
-      return;
+      setError("Please select from and to time");
+      return false;
     }
 
-    const fromHour = parseInt(hourFrom.split(':')[0], 10);
-    const fromMinute = parseInt(hourFrom.split(':')[1], 10);
-    const toHour = parseInt(hourTo.split(':')[0], 10);
-    const toMinute = parseInt(hourTo.split(':')[1], 10);
-
-    // Convert times to minutes since start of day
-    let fromMinutes = fromHour * 60 + fromMinute;
-    let toMinutes = toHour * 60 + toMinute;
+    const fromMinutes = convertToMinutes(hourFrom);
+    let toMinutes = convertToMinutes(hourTo);
 
     // Handle midnight wrap-around
     if (toMinutes === 0) {
-      toMinutes = 24 * 60; // 24:00 in minutes
+      toMinutes = 24 * 60;
     }
 
     if (fromMinutes >= toMinutes) {
-      setError('Invalid time range');
-      return;
+      setError("Invalid time range");
+      return false;
     }
 
-    // Format the hours and minutes to always have leading zeros
-    const formattedFromHour = String(fromHour).padStart(2, '0');
-    const formattedFromMinute = String(fromMinute).padStart(2, '0');
-    const formattedToHour = String(toHour).padStart(2, '0');
-    const formattedToMinute = String(toMinute).padStart(2, '0');
+    if (isOverlapping(fromMinutes, toMinutes)) {
+      setError("Time range overlaps with existing range for this day");
+      return false;
+    }
 
-    const newHour = { day, value: `${formattedFromHour}:${formattedFromMinute} - ${formattedToHour}:${formattedToMinute}` };
+    setError("");
+    return true;
+  };
 
-    const isOverlapping = selectedHours.some(hour => {
-      if (hour.day !== day) return false;
-      const [existingFrom, existingTo] = hour.value.split(' - ');
+  const convertToMinutes = (time: string) => {
+    const [hours, minutes] = time.split(":").map(Number);
+    return hours * 60 + minutes;
+  };
 
-      const existingFromHour = parseInt(existingFrom.split(':')[0], 10);
-      const existingFromMinute = parseInt(existingFrom.split(':')[1], 10);
-      const existingToHour = parseInt(existingTo.split(':')[0], 10);
-      const existingToMinute = parseInt(existingTo.split(':')[1], 10);
+  const isOverlapping = (fromMinutes: number, toMinutes: number) => {
+    return selectedHours.some(({ day: selectedDay, value }) => {
+      if (selectedDay !== day) return false;
 
-      // Convert existing times to minutes since start of day
-      let existingFromMinutes = existingFromHour * 60 + existingFromMinute;
-      let existingToMinutes = existingToHour * 60 + existingToMinute;
+      const existingFromMinutes = convertToMinutes(value.from);
+      let existingToMinutes = convertToMinutes(value.to);
 
-      // Handle midnight wrap-around for existing times
       if (existingToMinutes === 0) {
-        existingToMinutes = 24 * 60; // 24:00 in minutes
+        existingToMinutes = 24 * 60;
       }
 
       const isStartOverlap = fromMinutes < existingToMinutes && fromMinutes >= existingFromMinutes;
@@ -90,79 +82,66 @@ export default function Hours({ selectedHours, setSelectedHours, day, hoursList 
 
       return isStartOverlap || isEndOverlap || isEnclosingOverlap;
     });
-
-    if (isOverlapping) {
-      setError('Time range overlaps with existing range for this day');
-    } else {
-      setError('');
-      setSelectedHours(prevHours => [...prevHours, newHour]);
-    }
   };
 
+  const onAddHours = () => {
+    if (!validateTimeRange()) return;
 
-  const onRemoveHour = (day: string, hour: string) => {
-    setSelectedHours((prevHours: any) => {
-      // Find the index of the hour that matches the specified day and hour
-      const hourIndex = prevHours.findIndex((hours: any) => hours.day === day && hours.value === hour);
-      if (hourIndex > -1) {
-        // Create a copy of the previous hours array
-        const updatedHours = [...prevHours];
-        // Remove the hour at the found index
-        updatedHours.splice(hourIndex, 1);
-        // Return the updated hours array
-        return updatedHours;
-      }
-      // If no match is found, return the previous hours array unchanged
-      return prevHours;
-    });
-  }
+    const newHour = {
+      day,
+      value: { from: hourFrom, to: hourTo },
+    };
 
+    setSelectedHours((prevHours) => [...prevHours, newHour]);
+  };
 
-  // Group hours by day
-  const groupedHours = selectedHours.reduce((acc, hour) => {
-    // Check if the accumulator already has an entry for the current hour's day
-    if (!acc[hour.day]) {
-      // If not, create an empty array for this day
-      acc[hour.day] = [];
+  const onRemoveHour = (day: string, hour: THour["value"]) => {
+    setSelectedHours((prevHours) =>
+      prevHours.filter(({ day: d, value }) => !(d === day && value.from === hour.from && value.to === hour.to))
+    );
+  };
+
+  const groupedHours = selectedHours.reduce((acc, { day: selectedDay, value }) => {
+    if (!acc[selectedDay]) {
+      acc[selectedDay] = [];
     }
-
-    // Push the current hour's value to the array for this day
-    acc[hour.day].push(hour.value);
-
-    // Return the updated accumulator to be used in the next iteration
+    acc[selectedDay].push(value);
     return acc;
-  }, {} as Record<string, string[]>); // Initial value of the accumulator is an empty object
+  }, {} as Record<string, THour["value"][]>);
 
   return (
-    <>
-      <div className="flex flex-col gap-2">
-        <div className="flex flex-row gap-3 justify-center items-center align-center">
-          <span>from</span>
-          <TimePicker date={dateFrom} setDate={setDateFrom} />
-        </div>
-        <div className="flex flex-row gap-3 justify-center items-center  align-center">
-          <span>to&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-          <TimePicker date={dateTo} setDate={setDateTo} />
-        </div>
-        <Button variant={"outline"} className={'w-full'} onClick={onAddHours}><Plus /></Button>
-        {error && <span className="text-red-500">{error}</span>}
-        <ul>
-          {Object.entries(groupedHours).map(([hoursDay, hours]) => (
-            <li key={hoursDay}>
-              {hoursDay == day && <span className="text-yellow-700 font-bold">{hoursDay}:</span>}
-              {hoursDay != day && <span>{hoursDay}:</span>}
-              <ul>
-                {hours.map((hour, index) => (
-                  <li key={index} className="flex flex-row justify-between items-center">
-                    <span>- {hour}</span>
-                    {hoursDay == day && <Button onClick={() => onRemoveHour(day, hour)} variant={'outline'} size="icon"><Trash2 color="#FF3B6B" /></Button>}
-                  </li>
-                ))}
-              </ul>
-            </li>
-          ))}
-        </ul>
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-row gap-3 justify-center items-center">
+        <span>from</span>
+        <TimePicker date={dateFrom} setDate={setDateFrom} />
       </div>
-    </>
-  )
+      <div className="flex flex-row gap-3 justify-center items-center">
+        <span>to&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+        <TimePicker date={dateTo} setDate={setDateTo} />
+      </div>
+      <Button variant={"outline"} className="w-full" onClick={onAddHours}>
+        <Plus />
+      </Button>
+      {error && <span className="text-red-500">{error}</span>}
+      <ul>
+        {Object.entries(groupedHours).map(([hoursDay, hours]) => (
+          <li key={hoursDay}>
+            <span className={hoursDay === day ? "text-yellow-700 font-bold" : ""}>{hoursDay}:</span>
+            <ul>
+              {hours.map((hour, index) => (
+                <li key={index} className="flex flex-row justify-between items-center">
+                  <span>- {hour.from} - {hour.to}</span>
+                  {hoursDay === day && (
+                    <Button onClick={() => onRemoveHour(day, hour)} variant={"outline"} size="icon">
+                      <Trash2 color="#FF3B6B" />
+                    </Button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }

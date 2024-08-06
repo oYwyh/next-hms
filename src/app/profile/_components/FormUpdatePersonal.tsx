@@ -5,52 +5,34 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from "@/components/ui/Button";
 import { Form, FormMessage } from "@/components/ui/Form";
 import { useForm } from "react-hook-form";
-import { TupdatePersonalSchema, updatePersonalSchema } from "@/types/dashboard.types";
+import { TupdatePersonalSchema, updatePersonalSchema } from "@/types/profile.types";
 import { useEffect, useState } from "react";
 import { updatePersonal, updateProfile } from "@/actions/profile.actions";
 import toast from "react-hot-toast";
+import { TIndex, TUser } from "@/types/index.types";
 
-type FormUpdatePersonalTypes = {
-  id: string;
-  firstname: string,
-  lastname: string,
-  phone: string,
-  nationalId: string,
-  age: string,
-  gender: 'male' | 'female',
-}
-
-export default function FormUpdatePersonal({
-  id,
-  firstname,
-  lastname,
-  phone,
-  nationalId,
-  age,
-  gender,
-}: FormUpdatePersonalTypes) {
+export default function FormUpdatePersonal({ user }: { user: TUser }) {
 
   const [error, setError] = useState<string>()
 
   const [userData, setUserData] = useState<TupdatePersonalSchema>({
-    firstname,
-    lastname,
-    phone,
-    nationalId,
-    age,
-    gender,
+    firstname: user.firstname,
+    lastname: user.lastname,
+    phone: user.phone,
+    nationalId: user.nationalId,
+    age: user.age,
+    gender: user.gender,
   })
 
   const form = useForm<TupdatePersonalSchema>({
     resolver: zodResolver(updatePersonalSchema),
     defaultValues: {
-      id,
-      firstname,
-      lastname,
-      phone,
-      nationalId,
-      age,
-      gender,
+      firstname: user.firstname,
+      lastname: user.lastname,
+      phone: user.phone,
+      nationalId: user.nationalId,
+      age: user.age,
+      gender: user.gender,
     },
   });
 
@@ -60,16 +42,18 @@ export default function FormUpdatePersonal({
     });
   }, [userData])
 
-  const onSubmit = async (data: { [key: string]: string } & TupdatePersonalSchema) => {
+  const onSubmit = async (data:  TIndex<string> & TupdatePersonalSchema) => {
     let userFields = Object.keys(userData).filter(key => key !== 'id' && key !== 'role') as (keyof TupdatePersonalSchema)[];
     let fieldsNotToCompare: string[] = [];
     let fieldsToCompare: string[] = [];
 
     userFields.forEach((field) => {
-      if (data[field]?.toLowerCase() !== userData[field]?.toLowerCase()) {
-        fieldsToCompare.push(field);
-      } else {
-        fieldsNotToCompare.push(field);
+      if (typeof data[field] === 'string' && typeof userData[field] === 'string') {
+        if (data[field]?.toLowerCase() !== userData[field]?.toLowerCase()) {
+          fieldsToCompare.push(field);
+        } else {
+          fieldsNotToCompare.push(field);
+        }
       }
     });
 
@@ -88,6 +72,7 @@ export default function FormUpdatePersonal({
       return;
     }
     setError('')
+    data['id'] = user.id
     const result = await updatePersonal(data);
 
     if (result?.error) {

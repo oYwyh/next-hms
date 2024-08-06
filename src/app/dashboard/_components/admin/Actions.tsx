@@ -44,6 +44,7 @@ export default function Actions({ row, rowData, workTimeColumnExists }: { row: R
                     />
                     <Delete
                         id={row.getValue('id')}
+                        table={row.getValue('table')}
                         setPopOpen={setOpen}
                     />
                 </div>

@@ -1,22 +1,21 @@
 'use server'
 
 import db from "@/lib/db/index";
-import { TuniqueColumnsSchema } from "@/types/dashboard.types";
-import { columnsRegex } from "@/types/auth.types";
-import { reviewTable } from "@/lib/db/schema";
+import { TUniqueColumnsSchema } from "@/types/index.types";
+import { uniqueColumnsRegex } from "@/types/index.types";
+import { adminTable, appointmentTable, doctorTable, prescriptionTable, receptionistTable, reviewTable, userTable } from "@/lib/db/schema";
 import { revalidatePath } from "next/cache";
-import { and } from "drizzle-orm";
+import { and, sql } from "drizzle-orm";
 import { userMedicalFilesTable } from '@/lib/db/schema';
 
-export const uniqueColumnsValidations = async (data: TuniqueColumnsSchema) => {
-    console.log(`data`)
-    console.log(data)
-    const columns = [
-        data.username && { column: 'username', value: data?.username, regex: columnsRegex.username },
-        data.email && { column: 'email', value: data?.email, regex: columnsRegex.email },
-        data.phone && { column: 'phone', value: data?.phone, regex: columnsRegex.phone },
-        data.nationalId && { column: 'nationalId', value: data?.nationalId, regex: columnsRegex.nationalId }
-    ].filter(Boolean) as { column: string; value: string; regex: RegExp; }[];
+export const uniqueColumnsValidations = async (data: Partial<TUniqueColumnsSchema>) => {
+    const columns = Object.keys(uniqueColumnsRegex)
+        .filter(column => data[column as keyof TUniqueColumnsSchema]) // Ensure proper type assertion here
+        .map(column => ({
+            column,
+            value: data[column as keyof TUniqueColumnsSchema] as string, // Cast value to string
+            regex: uniqueColumnsRegex[column]
+        }));
 
     const errors: Record<string, string> = {};
 
@@ -37,7 +36,11 @@ export const uniqueColumnsValidations = async (data: TuniqueColumnsSchema) => {
     if (Object.keys(errors).length > 0) {
         return { error: errors };
     }
-}
+
+    return null; // If there are no errors
+};
+
+
 
 export async function postReview(
     data: any,
@@ -79,4 +82,30 @@ export async function checkPdfOwner(name: string, userId: string) {
 export async function getUserId() {
     const user = await db.query.userTable.findFirst()
     return user?.id
+}
+
+const tablesMap = {
+    user: userTable,
+    admin: userTable,
+    doctor: userTable,
+    receptionist: userTable,
+    appointment: appointmentTable,
+    review: reviewTable,
+    prescription: prescriptionTable,
+};
+
+export async function deleteAction(id: string | number, table: keyof typeof tablesMap) {
+    const tableDefinition = tablesMap[table];
+
+    if (!tableDefinition) {
+        throw new Error("Invalid table name");
+    }
+
+    const user = await db.delete(tableDefinition).where(sql`${tableDefinition.id} = ${id}`);
+
+    if (user) {
+        revalidatePath('/dashboard')
+    } else {
+        throw new Error("Deletion failed");
+    }
 }

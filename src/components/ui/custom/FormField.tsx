@@ -6,7 +6,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/Form";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { CalendarIcon, Check, ChevronsUpDown } from "lucide-react";
 import { Control, useController } from "react-hook-form";
 import {
   Select,
@@ -37,12 +37,15 @@ import { Dispatch, SetStateAction } from "react";
 import { Textarea } from "@/components/ui/Textarea";
 import { Rating } from "react-simple-star-rating";
 import { receptionistDepartments, specialties as specialtyOpts } from "@/constants";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
 
 interface FormFieldProps {
   form: {
     control: Control<any>;
   };
   name: string;
+  label?: string;
   error?: string;
   defaultValue?: string;
   disabled?: boolean;
@@ -64,6 +67,7 @@ interface FormFieldProps {
 export default function FormField({
   form,
   name,
+  label,
   error,
   defaultValue = "",
   disabled,
@@ -94,12 +98,14 @@ export default function FormField({
         name={name}
         render={({ field: { onChange, value = "" } }) => (
           <FormItem className="w-full">
-            {type != "hidden" && !isTextarea && !select && !switchValue && !rating && (
+            {!isTextarea && !select && !switchValue && !rating && name != 'dob' && (
               <>
-                <FormLabel>{name.charAt(0).toUpperCase() + name.slice(1)}</FormLabel>
+                {type != 'hidden' && label != '' && (
+                  <FormLabel className="capitalize">{label ? label : name}</FormLabel>
+                )}
                 <FormControl>
                   <Input
-                    placeholder={name.charAt(0).toUpperCase() + name.slice(1)}
+                    placeholder={label ? label : name}
                     value={value}
                     onChange={onChange}
                     disabled={disabled}
@@ -109,20 +115,60 @@ export default function FormField({
                 <FormMessage>{fieldError?.message}</FormMessage>
               </>
             )}
-            {type != "hidden" && isTextarea && (
+            {isTextarea && (
               <>
-                <FormLabel>{name.charAt(0).toUpperCase() + name.slice(1)}</FormLabel>
+                {type != 'hidden' && label != '' && (
+                  <FormLabel className="capitalize">{label ? label : name}</FormLabel>
+                )}
                 <FormControl>
                   <Textarea
-                    placeholder={placeholder ? placeholder : name.charAt(0).toUpperCase() + name.slice(1)}
+                    placeholder={placeholder ? placeholder : name}
                     value={value}
                     onChange={onChange}
-                    className="resize-none"
+                    className="capitalize resize-none"
                     disabled={disabled}
                   />
                 </FormControl>
                 <FormMessage>{fieldError?.message}</FormMessage>
               </>
+            )}
+            {name == 'dob' && (
+              <div className="flex flex-col gap-2 py-2">
+                {type != 'hidden' && label != '' && (
+                  <FormLabel className="capitalize">{label ? label : name}</FormLabel>
+                )}
+                <FormControl>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) =>
+                          date > new Date() || date < new Date("1900-01-01")
+                        }
+                        fromYear={1900}
+                        toYear={2030}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </FormControl>
+                <FormMessage>{fieldError?.message}</FormMessage>
+              </div>
             )}
             {select == "gender" && (
               <>
@@ -146,7 +192,10 @@ export default function FormField({
               </>
             )}
             {select == "specialty" && (
-              <>
+              <div className="flex flex-col gap-2">
+                {label != '' && (
+                  <FormLabel className="capitalize">{label ? label : name}</FormLabel>
+                )}
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -192,11 +241,13 @@ export default function FormField({
                   </PopoverContent>
                 </Popover>
                 <FormMessage>{fieldError?.message}</FormMessage>
-              </>
+              </div>
             )}
             {select == "receptionistDepartment" && (
               <div className="flex flex-col gap-2">
-                <FormLabel>Receptionist Department</FormLabel>
+                {label != '' && (
+                  <FormLabel className="capitalize">{label ? label : name}</FormLabel>
+                )}
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>

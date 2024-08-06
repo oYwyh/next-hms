@@ -7,13 +7,19 @@ import { revalidatePath } from "next/cache";
 import { appointmentTable, prescriptionTable, reservationTable, userTable } from "@/lib/db/schema";
 import { TdiagnosisSchema } from "@/types/dashboard.types";
 
-export async function book(
+export async function book({
+    userId,
+    doctorId,
+    date,
+    from,
+    to
+}: {
     userId: string,
     doctorId: number,
     date: string,
     from: string,
     to: string
-) {
+}) {
     const appointment = await db.insert(appointmentTable).values({
         userId: userId,
         doctorId: doctorId,

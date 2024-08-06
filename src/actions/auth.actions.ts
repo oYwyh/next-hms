@@ -3,7 +3,8 @@
 import db from "@/lib/db";
 import { lucia, validateRequest } from "@/lib/auth";
 import { adminTable, appointmentTable, userTable } from "@/lib/db/schema";
-import { columnsRegex, TcheckSchema, TloginSchema, TregisterSchema } from "@/types/auth.types";
+import { TIndex, uniqueColumnsRegex } from "@/types/index.types";
+import { TCheckSchema, TLoginSchema, TRegisterSchema } from "@/types/auth.types";
 import { TbaseSchema } from "@/types/index.types";
 import { uniqueColumnsValidations } from "@/actions/index.actions";
 import { hash, verify } from "@node-rs/argon2";
@@ -11,24 +12,27 @@ import { generateIdFromEntropySize } from "lucia";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { sql } from "drizzle-orm";
+import { uniqueColumns } from "@/constants";
+import { format } from "date-fns";
 
 export async function register(
-  data: TregisterSchema,
+  data: TRegisterSchema,
 ) {
-  const { username, firstname, lastname, phone, nationalId, age, gender, password, email } = data;
+  const { username, firstname, lastname, phone, nationalId, dob, gender, password, email } = data;
 
   const result = await uniqueColumnsValidations(data)
 
   if (result?.error) return { error: result?.error };
 
-  if (password) {
-    const passwordHash = await hash(password, {
-      memoryCost: 19456,
-      timeCost: 2,
-      outputLen: 32,
-      parallelism: 1,
-    });
-  }
+  // Convert dob to string format 'YYYY-MM-DD'
+  const dobString = format(dob, 'yyyy-MM-dd');
+
+  const passwordHash = await hash(password, {
+    memoryCost: 19456,
+    timeCost: 2,
+    outputLen: 32,
+    parallelism: 1,
+  });
 
   const userId = generateIdFromEntropySize(10);
 
@@ -40,10 +44,10 @@ export async function register(
     email,
     phone,
     nationalId,
-    age,
+    dob: dobString,
     gender,
     password: passwordHash,
-    // role: 'admin'
+    role: 'user'
   }).returning();
 
   if (user[0]?.role == 'admin') {
@@ -60,12 +64,12 @@ export async function register(
   return redirect("/");
 }
 
-export async function login(data: TloginSchema) {
+export async function login(data: TLoginSchema) {
 
-  const { column, credit, password } = data;
+  const { column, credential, password } = data;
 
   const existingUser = await db.query.userTable.findFirst({
-    where: (userTable: { [key: string]: any }, funcs) => funcs.eq(userTable[column], credit),
+    where: (userTable: { [key: string]: any }, funcs) => funcs.eq(userTable[column], credential),
   });
 
   if (existingUser) {
@@ -114,64 +118,53 @@ export async function logout() {
   );
 }
 
-export async function checkCredit(data: TcheckSchema) {
+export async function checkCredit(data: TCheckSchema) {
 
-  const { credit } = data;
+  const { credential } = data;
 
-  const columns = ['email', 'phone', 'nationalId', 'username'] as const;
+  const columns = uniqueColumns
 
-  const creditExist = await db.query.userTable.findFirst({
-    columns: {
-      username: true,
-      email: true,
-      phone: true,
-      nationalId: true,
-    },
+  // Define the type for columnsObject
+  type ColumnsObject = {
+    [key in typeof columns[number]]: true;
+  };
+
+  // Dynamically create the columns object
+  const columnsObject = columns.reduce((acc, column) => {
+    acc[column] = true;
+    return acc;
+  }, {} as ColumnsObject);
+
+
+  const creditExists = await db.query.userTable.findFirst({
+    columns: columnsObject,
 
     where: (userTable, { eq, or }) =>
       or(
-        ...columns.map(column => eq(userTable[column], credit))
+        ...columns.map(column => eq(userTable[column], credential))
       ),
   });
 
-  if (creditExist) {
-    const matchedColumn = columns.find(column => creditExist[column] === credit);
+  if (creditExists) {
+    const matchedColumn = columns.find(column => creditExists[column] === credential);
     return {
       column: matchedColumn,
-      exist: true,
+      exists: true,
     };
-  } else if (!creditExist) {
-    const isUsername = columnsRegex.username.test(credit);
-    const isEmail = columnsRegex.email.test(credit);
-    const isPhoneNumber = columnsRegex.phone.test(credit);
-    const isNationalId = columnsRegex.nationalId.test(credit); // Egyptian national ID regex
-
-    if (isEmail) {
-      return {
-        column: 'email',
-        exist: false,
-      };
-    } else if (isPhoneNumber) {
-      return {
-        column: 'phone',
-        exist: false,
-      };
-    } else if (isNationalId) {
-      return {
-        column: 'nationalId',
-        exist: false,
-      };
-    } else if (isUsername) {
-      return {
-        column: 'username',
-        exist: false,
-      };
-    } else {
-      return {
-        column: 'unknown',
-        exist: false,
-      };
+  } else if (!creditExists) {
+    // Dynamically check the credit against each regex
+    for (const column in uniqueColumnsRegex) {
+      if (uniqueColumnsRegex[column].test(credential)) {
+        return {
+          column,
+          exists: false,
+        };
+      }
     }
-  }
 
+    return {
+      column: 'unknown',
+      exists: false,
+    };
+  }
 }

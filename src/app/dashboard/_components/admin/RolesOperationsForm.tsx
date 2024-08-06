@@ -1,34 +1,32 @@
-import { TaddSchema, TeditSchema } from "@/types/dashboard.types";
+import { TAddSchema, TEditSchema } from "@/types/operations.types";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import FormField from "@/components/ui/custom/FormField";
 import Hours from "@/components/ui/custom/Hours";
 import { DialogFooter } from "@/components/ui/Dialog";
-import { Form, FormMessage } from "@/components/ui/Form";
+import { Form, FormMessage, FormField as CFormField, FormItem, FormLabel, FormControl } from "@/components/ui/Form";
 import { MultiSelect } from "@/components/ui/MultiSelect";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/Popover";
-import { UserRoles } from "@/types/index.types";
+import { THour, UserRoles } from "@/types/index.types";
 import { Dispatch, SetStateAction } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { specialties } from "@/constants";
 
 
-type TManageForm = {
+type TRolesOperationsForm = {
   role: UserRoles,
   operation: 'add' | 'edit',
-  form: UseFormReturn<TaddSchema | TeditSchema | any>,
-  onSubmit: (data: TeditSchema | TaddSchema | any) => void;
+  form: UseFormReturn<TAddSchema | TEditSchema | any>,
+  onSubmit: (data: TEditSchema | TAddSchema | any) => void;
   daysList: { value: string; label: string; }[],
   selectedDays: string[],
   setSelectedDays: Dispatch<SetStateAction<string[]>>;
-  selectedHours: { day: string; value: string }[],
-  setSelectedHours: Dispatch<SetStateAction<{ day: string; value: string }[]>>;
-  hoursList: { day: string; value: string }[],
-  error: string | null;
-  withAppointment: boolean;
+  selectedHours: THour[],
+  setSelectedHours: Dispatch<SetStateAction<THour[]>>;
+  error?: string | null;
 }
 
-export default function ManageForm({
+export default function RolesOperationsForm({
   role,
   operation,
   form,
@@ -38,10 +36,8 @@ export default function ManageForm({
   selectedDays,
   selectedHours,
   setSelectedHours,
-  hoursList,
   error,
-  withAppointment
-}: TManageForm) {
+}: TRolesOperationsForm) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -59,7 +55,7 @@ export default function ManageForm({
           <FormField form={form} name="nationalId" />
         </div>
         <div className="flex flex-row gap-10">
-          <FormField form={form} name="age" />
+          <FormField form={form} name="dob" />
           <FormField form={form} name="gender" select='gender' />
         </div>
         {role == 'receptionist' && (
@@ -67,7 +63,7 @@ export default function ManageForm({
             <FormField form={form} name="department" select='receptionistDepartment' />
           </div>
         )}
-        {operation == 'add' && withAppointment == false && (
+        {operation == 'add' && (
           <div className="flex flex-row gap-10">
             <FormField form={form} name="password" />
             <FormField form={form} name="confirmPassword" />
@@ -79,18 +75,31 @@ export default function ManageForm({
               <FormField form={form} name="specialty" select='specialty' />
             </div>
             <div className="pt-4">
-              <MultiSelect
-                options={daysList}
-                onValueChange={setSelectedDays}
-                defaultValue={selectedDays}
-                selectedHours={selectedHours}
-                setSelectedHours={setSelectedHours}
-                placeholder="Select Days"
-                variant="inverted"
-                animation={2}
-                maxCount={3}
-                clearAble={false}
+              <CFormField
+                control={form.control}
+                name='days'
+                render={({ field: { onChange, value } }) => (
+                  <FormItem>
+                    <FormLabel className="capitalize">Work Days</FormLabel>
+                    <FormControl>
+                      <MultiSelect
+                        options={daysList}
+                        onValueChange={setSelectedDays}
+                        defaultValue={selectedDays}
+                        selectedHours={selectedHours}
+                        setSelectedHours={setSelectedHours}
+                        placeholder="Select Days"
+                        variant="inverted"
+                        animation={2}
+                        maxCount={3}
+                        clearAble={false}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
+
             </div>
             <div className="pt-4 flex flex-row gap-2 flex-wrap">
               {selectedDays &&
@@ -103,7 +112,6 @@ export default function ManageForm({
                           selectedHours={selectedHours}
                           setSelectedHours={setSelectedHours}
                           day={day}
-                          hoursList={hoursList}
                         />
                       </PopoverContent>
                     </Popover>

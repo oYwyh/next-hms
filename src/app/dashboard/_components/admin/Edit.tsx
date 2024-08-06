@@ -1,9 +1,9 @@
 'use client'
 
-import { daysList } from "@/constants";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { daysList } from "@/constants";
 import {
   Dialog,
   DialogContent,
@@ -13,129 +13,87 @@ import {
   DialogFooter,
   DialogHeader,
 } from "@/components/ui/Dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs"
-import { TeditSchema, TpasswordSchema, editSchema, passwordSchema } from "@/types/dashboard.types";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
+import { TEditSchema, TPasswordSchema, editSchema, passwordSchema } from "@/types/operations.types";
 import { edit, editPassword } from "@/actions/operations.actions";
-import ManageForm from "./ManageForm";
+import RolesOperationsForm from "@/app/dashboard/_components/admin/RolesOperationsForm";
 import ManagePassword from "./ManagePassword";
 import { Button } from "@/components/ui/Button";
-import { THours, TWorkHours, UserRoles } from "@/types/index.types";
+import { THour, TIndex, TWorkHour, UserRoles } from "@/types/index.types";
+import { compareFields, handleError, normalizeDataFields } from "@/lib/funcs";
 
 type TEdit = {
-  role: UserRoles
-  userId: string
-  userData: { [key: string]: string } & TeditSchema
-  workTime: any
-  setPopOpen: Dispatch<SetStateAction<boolean | undefined>>;
-}
+  role: UserRoles;
+  userId: string;
+  userData: { [key: string]: string } & TEditSchema;
+  workTime: any;
+  setPopOpen: React.Dispatch<React.SetStateAction<boolean | undefined>>;
+};
 
 export default function Edit({ role, userId, userData, workTime, setPopOpen }: TEdit) {
   const [open, setOpen] = useState(false);
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
-  const [selectedHours, setSelectedHours] = useState<THours>([]);
+  const [selectedHours, setSelectedHours] = useState<THour[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const hoursList: THours = [];
+
+  const initializeWorkTime = (workTime: any) => {
+    const uniqueDays: string[] = Array.from(new Set(workTime.map((entry: { day: string }) => entry.day)));
+    setSelectedDays(uniqueDays);
+
+    const hours = workTime.map((entry: { day: string; workHour: TWorkHour }) => ({
+      day: entry.day,
+      value: {
+        from: entry.workHour.from,
+        to: entry.workHour.to
+      },
+    }));
+    setSelectedHours(hours);
+  };
+
+  const getDefaultValues = (userData: TEditSchema) => ({
+    username: userData.username || "",
+    firstname: userData.firstname || "",
+    lastname: userData.lastname || "",
+    email: userData.email || "",
+    phone: userData.phone || "",
+    nationalId: userData.nationalId || "",
+    dob: new Date(userData.dob) || new Date(),
+    gender: userData.gender || "",
+    specialty: userData.specialty || "",
+    department: userData.department || "",
+  });
+
 
   useEffect(() => {
     if (workTime) {
-      const days = workTime.map((entry: { day: string }) => entry.day);
-      const uniqueDays: string[] = Array.from(new Set(days));
-      setSelectedDays(uniqueDays);
-
-      const hours = workTime.map((entry: { day: string, workHour: TWorkHours }) => ({
-        day: entry.day,
-        value: `${entry.workHour.from} - ${entry.workHour.to}`
-      }));
-      setSelectedHours(hours);
+      initializeWorkTime(workTime);
     }
   }, [userData]);
 
-  console.log(userData)
-
-  const accountForm = useForm<TeditSchema>({
+  const accountForm = useForm<TEditSchema>({
     resolver: zodResolver(editSchema),
-    defaultValues: {
-      username: userData?.username || "",
-      firstname: userData?.firstname || "",
-      lastname: userData?.lastname || "",
-      email: userData?.email || "",
-      phone: userData?.phone || "",
-      nationalId: userData?.nationalId || "",
-      age: userData?.age || "",
-      gender: userData?.gender || "",
-      specialty: userData?.specialty || "",
-      department: userData?.department || "",
-    }
+    defaultValues: getDefaultValues(userData),
   });
 
-  const passwordForm = useForm<TpasswordSchema>({
+  const passwordForm = useForm<TPasswordSchema>({
     resolver: zodResolver(passwordSchema),
     defaultValues: {
       password: "",
-      confirmPassword: ""
-    }
+      confirmPassword: "",
+    },
   });
 
 
-  const onEditAccount = async (data: TeditSchema) => {
-    // Compare form data with userData and log any matching fields
-    const userFields = Object.keys(userData).filter(key => key !== 'workTime' && key !== 'id' && key !== 'role')
-    const unChangedFields: string[] = [];
-    const changedFields: string[] = [];
+  const onEditAccount = async (data: TIndex<string> & TEditSchema) => {
+    const { changedFields, unChangedFields } = compareFields(data, userData, ['role', 'id', 'workTime']);
 
-    userFields.forEach((field) => {
-      if (data[field]?.toLowerCase() !== userData[field]?.toLowerCase()) {
-        changedFields.push(field);
-      } else {
-        unChangedFields.push(field);
-      }
-    });
+    unChangedFields.forEach(field => delete data[field]);
 
-    for (const field of unChangedFields) (
-      delete data[field]
-    )
+    normalizeDataFields(data);
 
-    Object.entries(data).forEach(([key, value]) => {
-      if (typeof value === 'string') {
-        data[key] = value.toLowerCase();
-      }
-    });
-
-    if (role == 'doctor') {
-      if (!selectedDays?.length || !selectedHours?.length) {
-        setError("Please select days and hours");
-        return;
-      }
-
-
-      // Check if each selected day has at least one hour range
-      const daysWithHours = new Set(selectedHours.map(hour => hour.day));
-      const allDaysHaveHours = selectedDays.every(day => daysWithHours.has(day));
-
-
-      if (!allDaysHaveHours) {
-        setError("Each selected day must have at least one time range.");
-        return;
-      }
-
-      setError(null); // Clear previous error if any
-
-      // Compare selectedDays and selectedHours with userData
-      const originalDays = Array.from(new Set(workTime.map((entry: { day: string }) => entry.day)));
-      const originalHours = workTime.map((entry: { day: string, workHour: TWorkHours }) => ({
-        day: entry.day,
-        value: `${entry.workHour.from} - ${entry.workHour.to}`,
-      }));
-
-      const daysChanged = !(selectedDays.length === originalDays.length && selectedDays.every((day) => originalDays.includes(day)));
-      const hoursChanged = !(selectedHours.length === originalHours.length && selectedHours.every((hour) => {
-        return originalHours.some((originalHour: { day: string, value: string }) => originalHour.day === hour.day && originalHour.value === hour.value);
-      }));
-
-      if (changedFields.length === 0 && !daysChanged && !hoursChanged) {
-        setError("No changes detected");
-        return;
-      }
+    if (role === 'doctor') {
+      if (!validateDoctorFields()) return;
+      if (!detectChanges(changedFields)) return;
     } else {
       if (changedFields.length === 0) {
         setError("No changes detected");
@@ -143,41 +101,75 @@ export default function Edit({ role, userId, userData, workTime, setPopOpen }: T
       }
     }
 
-    let result;
-    if (role == 'doctor') {
-      result = await edit(data, role, userId, 'edit', selectedDays, selectedHours);
-    } else {
-      result = await edit(data, role, userId, 'edit');
+    await handleEdit(data);
+  };
+
+  const validateDoctorFields = () => {
+    if (!selectedDays.length || !selectedHours.length) {
+      accountForm.setError('days', { type: 'custom', message: 'Please select days and hours' });
+      return false;
     }
 
-    if (result?.done) {
-      accountForm.reset();
-      setSelectedDays([]);
-      setSelectedHours([]);
-      setOpen(false);
-      setPopOpen(false);
+    const daysWithHours = new Set(selectedHours.map(hour => hour.day));
+    const allDaysHaveHours = selectedDays.every(day => daysWithHours.has(day));
 
+    if (!allDaysHaveHours) {
+      accountForm.setError('days', { type: 'custom', message: "Each selected day must have at least one time range." });
+      return false;
+    }
+
+    setError(null);
+    return true;
+  };
+
+  const detectChanges = (changedFields: string[]) => {
+    const originalDays = Array.from(new Set(workTime.map((entry: { day: string }) => entry.day)));
+    const originalHours: THour[] = workTime.map((entry: { day: string; workHour: TWorkHour }) => ({
+      day: entry.day,
+      value: {
+        from: entry.workHour.from,
+        to: entry.workHour.to
+      },
+    }));
+
+    const daysChanged = selectedDays.length !== originalDays.length || !selectedDays.every(day => originalDays.includes(day));
+    const hoursChanged = selectedHours.length !== originalHours.length || !selectedHours.every(hour =>
+      originalHours.some((originalHour: THour) => originalHour.day === hour.day && originalHour.value.to === hour.value.to && originalHour.value.from === hour.value.from)
+    );
+
+    if (changedFields.length === 0 && !daysChanged && !hoursChanged) {
+      setError("No changes detected");
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleEdit = async (data: TEditSchema) => {
+    const result = role === 'doctor'
+      ? await edit({ data, role, userId, operation: 'edit', selectedDays, selectedHours })
+      : await edit({ data, role, userId, operation: 'edit' });
+
+    if (result?.success) {
+      resetForms();
     } else if (result?.error) {
-      console.log(result?.error)
-      for (const [field, message] of Object.entries(result.error)) {
-        accountForm.setError(field, {
-          type: "server",
-          message: message
-        });
-      }
+      handleError(accountForm, result.error);
     }
   };
 
-  const onEditPassword = async (data: TpasswordSchema) => {
+  const resetForms = () => {
+    accountForm.reset();
+    passwordForm.reset();
+    setSelectedDays([]);
+    setSelectedHours([]);
+    setOpen(false);
+    setPopOpen(false);
+  };
 
+  const onEditPassword = async (data: TPasswordSchema) => {
     const result = await editPassword(data, userId);
-
-    if (result?.done) {
-      passwordForm.reset();
-      setSelectedDays([]);
-      setSelectedHours([]);
-      setOpen(false);
-      setPopOpen(false);
+    if (result?.success) {
+      resetForms();
     }
   }
 
@@ -185,22 +177,22 @@ export default function Edit({ role, userId, userData, workTime, setPopOpen }: T
     <div>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button variant="outline" className='w-full capitalize'>Edit {role}</Button>
+          <Button variant="outline" className="w-full capitalize">Edit {role}</Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle className='capitalize'>Edit {role}</DialogTitle>
+            <DialogTitle className="capitalize">Edit {role}</DialogTitle>
             <DialogDescription>
               Anyone who has this link will be able to view this.
             </DialogDescription>
           </DialogHeader>
-          <Tabs defaultValue="account" className="w-[100%]">
-            <TabsList className="w-[100%]">
-              <TabsTrigger className="w-[100%]" value="account">Account</TabsTrigger>
-              <TabsTrigger className="w-[100%]" value="password">Password</TabsTrigger>
+          <Tabs defaultValue="account" className="w-full">
+            <TabsList className="w-full">
+              <TabsTrigger className="w-full" value="account">Account</TabsTrigger>
+              <TabsTrigger className="w-full" value="password">Password</TabsTrigger>
             </TabsList>
             <TabsContent value="account">
-              <ManageForm
+              <RolesOperationsForm
                 role={role}
                 form={accountForm}
                 onSubmit={onEditAccount}
@@ -209,17 +201,14 @@ export default function Edit({ role, userId, userData, workTime, setPopOpen }: T
                 setSelectedDays={setSelectedDays}
                 selectedHours={selectedHours}
                 setSelectedHours={setSelectedHours}
-                hoursList={hoursList}
                 error={error}
-                operation={'edit'}
+                operation="edit"
               />
             </TabsContent>
             <TabsContent value="password">
               <ManagePassword
                 form={passwordForm}
                 onSubmit={onEditPassword}
-                error={error}
-                operation={'edit'}
               />
             </TabsContent>
           </Tabs>
