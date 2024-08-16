@@ -18,15 +18,3 @@ export const loginSchema = z.object({
 });
 
 export type TLoginSchema = z.infer<typeof loginSchema>;
-
-export const checkSchema = z.object({
-  credential: z.string(),
-});
-
-export type TCheckSchema = z.infer<typeof checkSchema>;
-
-
-export type InsertedCredential = {
-  column?: UniqueColumns;
-  credential: string;
-};

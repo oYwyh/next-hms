@@ -1,4 +1,7 @@
 import { TIndex } from "@/types/index.types";
+import { QueryClient, QueryKey } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { revalidatePath } from "next/cache";
 import { UseFormReturn } from "react-hook-form";
 
 export function getDateByDayName(dayName: string) {
@@ -22,7 +25,14 @@ export function getDateByDayName(dayName: string) {
     return `${year}-${month}-${day}`;
 }
 
-export function generateRandomPassword() {
+export function getDayByDate(dateString: string) {
+    const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const date = new Date(dateString);
+    const dayName = daysOfWeek[date.getDay()];
+    return dayName;
+}
+
+export function generatePassword() {
     const prefix = "HMS@";
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     const length = 6;
@@ -54,13 +64,21 @@ export const handleError = (form: UseFormReturn<any>, error: Record<string, stri
 };
 
 export const compareFields = (data: TIndex<string> & any, userData: TIndex<string> & any, ignoredFields: string[] = []) => {
+    const dobString = format(data.dob, 'yyyy-MM-dd');
+    data['dob'] = dobString;
     const userFields = Object.keys(userData).filter(field => !ignoredFields?.includes(field));
     const unChangedFields: string[] = [];
     const changedFields: string[] = [];
 
     userFields.forEach(field => {
-        if (typeof data[field] == 'string' && typeof userData[field] == 'string') {
+        if (typeof data[field] == 'string' && typeof userData[field] == 'string' && isNaN(Number(data[field])) && isNaN(Number(userData[field]))) {
             if (data[field]?.toLowerCase() !== userData[field]?.toLowerCase()) {
+                changedFields.push(field);
+            } else {
+                unChangedFields.push(field);
+            }
+        } else if (!isNaN(data[field]) && !isNaN(userData[field])) {
+            if (Number(data[field]) != Number(userData[field])) {
                 changedFields.push(field);
             } else {
                 unChangedFields.push(field);
@@ -68,5 +86,28 @@ export const compareFields = (data: TIndex<string> & any, userData: TIndex<strin
         }
     });
 
+    data['dob'] = data.dob;
     return { changedFields, unChangedFields };
 };
+
+export const getAverageRating = (reviews: any[]) => {
+    const totalRating = reviews.reduce((sum: any, { review }: { review: any }) => {
+        return sum + parseFloat(review.rating);
+    }, 0);
+    return totalRating / reviews.length;
+}
+
+export const computeSHA256 = async (file: any) => {
+    const buffer = await file.arrayBuffer();
+    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+    return hashHex;
+}
+
+export function invalidateQueries({ queryClient, key }: { queryClient: QueryClient, key: QueryKey }) {
+    queryClient.invalidateQueries({
+        queryKey: key,
+        type: 'all',
+    });
+}

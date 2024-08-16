@@ -7,14 +7,10 @@ import PatientInfo from "./PatientInfo"
 import Diagnosis from "./Diagnosis"
 import Prescriptions from "./Prescriptions"
 import RatingModal from "@/components/ui/custom/RatingModal"
+import { redirect } from "next/navigation"
 
 const getInfo = async (appointmentId: number) => {
     const info = await db.query.appointmentTable.findFirst({
-        columns: {
-            userId: true,
-            doctorId: true,
-            status: true
-        },
         with: {
             reservation: {
                 with: {
@@ -27,27 +23,26 @@ const getInfo = async (appointmentId: number) => {
     })
 
     if (info == null) throw new Error('Failed to get appointment info');
+    // if (info.status === 'completed') return redirect('/dashboard/appointments')
 
     const patient = await db.query.userTable.findFirst({
-        where: sql`${userTable.id} = ${info?.userId}`
-    })
-
-    const [doctor] = await db.select().from(userTable).where(sql`${userTable.id} = ${info?.doctorId}`)
-        .leftJoin(doctorTable, eq(doctorTable.userId, userTable.id))
-
-    const folders = await db.query.userMedicalFoldersTable.findMany({
+        where: sql`${userTable.id} = ${info?.userId}`,
         with: {
-            files: true
-        },
-        where: sql`${userMedicalFoldersTable.userId} = ${info?.userId}`,
+            folders: {
+                with: {
+                    files: true
+                }
+            }
+        }
     })
 
+    const doctor = await db.query.doctorTable.findFirst({
+        where: sql`${doctorTable.id} = ${info?.doctorId}`
+    })
 
-    if (!patient || !doctor) throw new Error('Failed to get appointment info');
     return {
         patient,
         doctor,
-        folders,
         review: info.review,
         reservation: info.reservation,
         prescription: info.reservation?.prescription
@@ -59,13 +54,13 @@ export default async function View({ appointmentId }: { appointmentId: number })
     if (!user) throw new Error('Unauthorized');
     const info = await getInfo(appointmentId);
 
-    if (!info || !info.doctor.doctor) throw new Error('Failed to get appointment info');
+    if (!info || !info.patient || !info.doctor) throw new Error('Failed to get appointment info');
     if (user && user.role == 'doctor') if (!user /* || user.id !== info?.doctor?.doctor.id */) throw new Error('Unauthorized');
 
     return (
         <>
             {!info.review && (
-                <RatingModal user={user} appointmentId={appointmentId} doctorId={info.doctor.doctor.id} />
+                <RatingModal user={user} appointmentId={appointmentId} doctorId={info.doctor.id} />
             )}
             <Tabs defaultValue={user && user.role != 'user' ? "info" : "diagnosis"} className="w-[100%]">
                 <TabsList className="w-[100%]">
@@ -73,7 +68,7 @@ export default async function View({ appointmentId }: { appointmentId: number })
                     <TabsTrigger className="w-[100%]" value="diagnosis">Diagnosis</TabsTrigger>
                     <TabsTrigger className="w-[100%]" value="prescriptions">Prescriptions</TabsTrigger>
                 </TabsList>
-                {user && user.role != 'user' && <TabsContent value="info"><PatientInfo patient={info.patient} folders={info.folders} /></TabsContent>}
+                {user && user.role != 'user' && <TabsContent value="info"><PatientInfo patient={info.patient} folders={info.patient.folders} /></TabsContent>}
                 <TabsContent value="diagnosis"><Diagnosis appointmentId={appointmentId} reservation={info.reservation} view={true} /></TabsContent>
                 <TabsContent value="prescriptions"><Prescriptions reservation={info.reservation} prescriptions={info.prescription} /></TabsContent>
             </Tabs>

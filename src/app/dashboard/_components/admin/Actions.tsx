@@ -7,8 +7,8 @@ import Delete from "@/app/dashboard/_components/admin/Delete";
 import { Row } from "@tanstack/react-table";
 import Link from "next/link";
 
-export default function Actions({ row, rowData, workTimeColumnExists }: { row: Row<any>, rowData: any, workTimeColumnExists: boolean }) {
-    const [open, setOpen] = useState<boolean>();
+export default function Actions({ row, rowData }: { row: Row<any>, rowData: any }) {
+    const [open, setOpen] = useState<boolean>(false);
 
     return (
         <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -29,7 +29,7 @@ export default function Actions({ row, rowData, workTimeColumnExists }: { row: R
                         </Link>
                     )}
                     {row.getValue('role') == 'user' && (
-                        <Link href={`/dashboard/user/${row.getValue('id')}/files`}>
+                        <Link href={`/dashboard/users/${row.getValue('id')}/files`}>
                             <Button className="w-full" variant={'outline'}>
                                 View Files
                             </Button>
@@ -39,12 +39,17 @@ export default function Actions({ row, rowData, workTimeColumnExists }: { row: R
                         role={row.getValue('role')}
                         userId={row.getValue('id')}
                         userData={rowData}
-                        workTime={workTimeColumnExists ? row.getValue('workTime') : []}
+                        workTime={row.getValue('workTime') ? row.getValue('workTime') : []}
                         setPopOpen={setOpen}
                     />
                     <Delete
                         id={row.getValue('id')}
-                        table={row.getValue('table')}
+                        table={
+                            row.getValue('table') == 'doctor'
+                                || row.getValue('table') == 'receptionist'
+                                || row.getValue('table') == 'admin'
+                                ? 'user' : row.getValue('table')
+                        }
                         setPopOpen={setOpen}
                     />
                 </div>

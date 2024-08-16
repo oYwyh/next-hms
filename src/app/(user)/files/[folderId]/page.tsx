@@ -1,4 +1,4 @@
-import Files from "@/app/(user)/files/[folderId]/Files"
+import Files from "@/app/_components/Files/Files"
 import { validateRequest } from "@/lib/auth"
 import db from "@/lib/db"
 import { userMedicalFoldersTable } from "@/lib/db/schema"
@@ -20,7 +20,7 @@ export default async function FilesPage({ params: { folderId } }: { params: { fo
     return (
         <>
             {isFolderOwner && (
-                <Files folderId={folderId} />
+                <Files folderId={folderId} userId={user.id} />
             )}
         </>
     )

@@ -12,32 +12,20 @@ import { createReservation } from "@/actions/appointment.actions";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
 import { Label } from "@/components/ui/Lable";
+import { laboratoriesList, medicinesList, radiologiesList } from "@/constants";
+import { TReservation } from "@/types/index.types";
 
-const laboratoryList = [
-    { value: "laboratory1", label: "Laboratory 1" },
-    { value: "laboratory2", label: "Laboratory 2" },
-    { value: "laboratory3", label: "Laboratory 3" },
-    { value: "laboratory4", label: "Laboratory 4" },
-    { value: "laboratory5", label: "Laboratory 5" },
-    { value: "laboratory6", label: "Laboratory 6" },
-    { value: "laboratory7", label: "Laboratory 7" },
-]
-
-export default function Diagnosis({ appointmentId, view, reservation }: { appointmentId: string | number, view: boolean, reservation?: any }) {
-    const [selectedLaboratory, setSelectedLaboratory] = useState<string[]>([]);
-    const [selectedRadiology, setSelectedRadiology] = useState<string[]>([]);
-    const [selectedMedicine, setSelectedMedicine] = useState<string[]>([]);
-    const [error, setError] = useState<string | null>(null);
-    const [laboratories, setLaboratories] = useState<any[]>([]);
-    const [radiologies, setRadiologies] = useState<any[]>([]);
-    const [medicines, setMedicines] = useState<any[]>([]);
+export default function Diagnosis({ appointmentId, view, reservation }: { appointmentId: number, view: boolean, reservation?: TReservation }) {
+    const [selectedLaboratories, setSelectedLaboratories] = useState<string[]>([]);
+    const [selectedRadiologies, setSelectedRadiologies] = useState<string[]>([]);
+    const [selectedMedicines, setSelectedMedicines] = useState<string[]>([]);
     const router = useRouter()
 
     useEffect(() => {
-        if (view == true) {
-            setLaboratories(reservation?.laboratory.split(',') || []);
-            setRadiologies(reservation?.radiology.split(',') || []);
-            setMedicines(reservation?.medicine.split(',') || []);
+        if (reservation && view == true) {
+            setSelectedLaboratories(reservation.laboratories.split(',') || []);
+            setSelectedRadiologies(reservation.radiologies.split(',') || []);
+            setSelectedMedicines(reservation.medicines.split(',') || []);
         }
     }, [view])
 
@@ -50,16 +38,22 @@ export default function Diagnosis({ appointmentId, view, reservation }: { appoin
     })
 
     const onSubmit = async (data: TdiagnosisSchema) => {
-        const result = await createReservation(Number(appointmentId), data, selectedLaboratory, selectedRadiology, selectedMedicine);
+        const result = await createReservation({
+            data,
+            appointmentId: appointmentId,
+            laboratories: selectedLaboratories,
+            radiologies: selectedRadiologies,
+            medicines: selectedMedicines
+        });
 
         if (result && result.reserved) {
-            if (selectedLaboratory.length > 0) {
+            if (selectedLaboratories.length > 0) {
                 return router.push(`/dashboard/appointments/reservation/${appointmentId}/prescriptions/laboratory`)
             }
-            if (selectedRadiology.length > 0) {
+            if (selectedRadiologies.length > 0) {
                 return router.push(`/dashboard/appointments/reservation/${appointmentId}/prescriptions/radiology`)
             }
-            if (selectedMedicine.length > 0) {
+            if (selectedMedicines.length > 0) {
                 return router.push(`/dashboard/appointments/reservation/${appointmentId}/prescriptions/medicine`)
             }
             return router.push('/dashboard/appointments');
@@ -75,27 +69,27 @@ export default function Diagnosis({ appointmentId, view, reservation }: { appoin
                             <FormField form={form} name="history" disabled={view} isTextarea={true} placeholder="Enter Patient History" />
                             <FormField form={form} name="diagnosis" disabled={view} isTextarea={true} placeholder="Enter Patient Diagnosis" />
                         </div>
-                        {view && (
+                        {reservation && view && (
                             <div className="flex flex-col gap-3">
                                 <div className="grid grid-cols-2 w-[100%] gap-3">
-                                    {reservation.laboratory != '' && (
+                                    {reservation.laboratories != '' && (
                                         <>
                                             <div className="flex flex-col gap-2">
                                                 <Label>Laboratory</Label>
                                                 <div className="flex flex-row gap-3">
-                                                    {laboratories.map((laboratory: any) => (
+                                                    {selectedLaboratories.map((laboratory: any) => (
                                                         <Badge>{laboratory}</Badge>
                                                     ))}
                                                 </div>
                                             </div>
                                         </>
                                     )}
-                                    {reservation.radiology != '' && (
+                                    {reservation.radiologies != '' && (
                                         <>
                                             <div className="flex flex-col gap-2">
                                                 <Label>Radiology</Label>
                                                 <div className="flex flex-row gap-3">
-                                                    {laboratories.map((radiologies: any) => (
+                                                    {selectedRadiologies.map((radiologies: any) => (
                                                         <Badge>{radiologies}</Badge>
                                                     ))}
                                                 </div>
@@ -103,12 +97,12 @@ export default function Diagnosis({ appointmentId, view, reservation }: { appoin
                                         </>
                                     )}
                                 </div>
-                                {reservation.medicine != '' && (
+                                {reservation.medicines != '' && (
                                     <>
                                         <div className="flex flex-col gap-2">
                                             <Label>Medicine</Label>
                                             <div className="flex flex-row gap-3">
-                                                {medicines.map((medicine: any) => (
+                                                {selectedMedicines.map((medicine: any) => (
                                                     <Badge>{medicine}</Badge>
                                                 ))}
                                             </div>
@@ -123,9 +117,9 @@ export default function Diagnosis({ appointmentId, view, reservation }: { appoin
                                     <div className="grid grid-cols-2 w-[100%] gap-3">
                                         <MultiSelect
                                             className="w-[100%]"
-                                            options={laboratoryList}
-                                            onValueChange={setSelectedLaboratory}
-                                            defaultValue={selectedLaboratory}
+                                            options={laboratoriesList}
+                                            onValueChange={setSelectedLaboratories}
+                                            defaultValue={selectedLaboratories}
                                             placeholder="Select Laboratories"
                                             variant="inverted"
                                             animation={2}
@@ -134,9 +128,9 @@ export default function Diagnosis({ appointmentId, view, reservation }: { appoin
                                             label="Select Laboratories"
                                         />
                                         <MultiSelect
-                                            options={laboratoryList}
-                                            onValueChange={setSelectedRadiology}
-                                            defaultValue={selectedRadiology}
+                                            options={radiologiesList}
+                                            onValueChange={setSelectedRadiologies}
+                                            defaultValue={selectedRadiologies}
                                             placeholder="Select Radiologies"
                                             variant="inverted"
                                             animation={2}
@@ -146,9 +140,9 @@ export default function Diagnosis({ appointmentId, view, reservation }: { appoin
                                         />
                                     </div>
                                     <MultiSelect
-                                        options={laboratoryList}
-                                        onValueChange={setSelectedMedicine}
-                                        defaultValue={selectedMedicine}
+                                        options={medicinesList}
+                                        onValueChange={setSelectedMedicines}
+                                        defaultValue={selectedMedicines}
                                         placeholder="Select Medicines"
                                         variant="inverted"
                                         animation={2}
@@ -156,7 +150,6 @@ export default function Diagnosis({ appointmentId, view, reservation }: { appoin
                                         disabled={view}
                                         label="Select Medicines"
                                     />
-                                    {error && <FormMessage>{error}</FormMessage>}
                                 </div>
                             </>
                         )}

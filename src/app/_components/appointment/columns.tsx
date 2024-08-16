@@ -7,7 +7,7 @@ import Actions from "./Actions"
 import { AppointmentStatus } from "@/types/index.types"
 import { statusOpt } from "@/constants"
 
-const appointmentColumns = ['id', 'userId', 'doctorId', 'doctorName', 'patientName', 'date', 'time', 'status']
+const appointmentColumns = ['id', 'userId', 'doctorId', 'doctorUserId', 'doctorName', 'patientName', 'date', 'time', 'status']
 
 const ActionsTableColumn = [
     {

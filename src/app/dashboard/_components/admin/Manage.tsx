@@ -1,7 +1,7 @@
 import { DataTable } from "@/components/ui/table/DataTable";
 import { DoctorColumnsTypes, UserColumnsTypes, DoctorTableColumns, UserTableColumns, AdminTableColumns, DoctorTableColumnsWithPrivileges, UserTableColumnsWithPrivileges, AdminTableColumnsWithPrivileges, ReceptionistTableColumnsWithPrivileges, ReceptionistTableColumns } from "./columns";
 import db from "@/lib/db";
-import AddPage from "./Add";
+import AddPage from "../Add";
 import { useGetUser } from "@/hooks/useGetUser";
 import { TTables, UserRoles } from "@/types/index.types";
 import { specialties } from "@/constants";
@@ -36,6 +36,7 @@ async function getDoctors() {
       dob: doctor.dob,
       gender: doctor.gender,
       role: doctor.role,
+      fee: doctor.doctor.fee,
       specialty: doctor.doctor.specialty,
       workTime: doctor.doctor.workDays.flatMap((workDay) => workDay.workHours.flatMap((workHour) => { return { workHour: workHour, day: workDay.day } })),
       table: 'doctor'
@@ -151,7 +152,7 @@ async function getData(table: TTables) {
   }
 }
 
-export default async function ManagePage({ table }: { table: TTables }) {
+export default async function ManagePage({ table }: { table: UserRoles }) {
   const user = await useGetUser()
   if (!user) throw new Error('Unauthorized')
   const isSuper = user && 'admin' in user && user.admin?.super

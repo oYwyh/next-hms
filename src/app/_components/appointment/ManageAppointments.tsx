@@ -12,7 +12,7 @@ async function getData() {
     const appointments = await db.query.appointmentTable.findMany({
         where: user?.role === 'admin'
             ? sql`TRUE` // This will fetch all appointments
-            : sql`${user?.role === 'user' ? appointmentTable.userId : Number(appointmentTable.doctorId)} = ${user?.role === 'user' ? user?.id : Number(user?.doctor?.id)}`,
+            : sql`${user?.role === 'user' ? appointmentTable.userId : Number(appointmentTable.doctorId)} = ${user?.role === 'user' ? user?.id : Number(user?.id)}`,
         with: {
             user: {
                 columns: {
@@ -27,6 +27,7 @@ async function getData() {
                 with: {
                     user: {
                         columns: {
+                            id: true,
                             firstname: true,
                             lastname: true,
                         }
@@ -41,6 +42,7 @@ async function getData() {
             id: appointment?.id,
             userId: appointment?.userId,
             doctorId: appointment?.doctorId,
+            doctorUserId: appointment?.doctor.user.id,
             date: appointment?.date,
             time: `${appointment?.from} - ${appointment?.to}`,
             patientName: appointment?.user.firstname + ' ' + appointment?.user.lastname,

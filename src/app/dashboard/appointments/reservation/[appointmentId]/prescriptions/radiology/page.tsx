@@ -3,7 +3,7 @@ import { getInfo } from "../funcs";
 
 
 
-export default async function PrescriptionPage({ params: { appointmentId } }: { params: { appointmentId: string } }) {
+export default async function PrescriptionPage({ params: { appointmentId } }: { params: { appointmentId: number } }) {
     const info = await getInfo(appointmentId);
 
     return (
@@ -13,6 +13,7 @@ export default async function PrescriptionPage({ params: { appointmentId } }: { 
             prescription={info.prescription}
             patient={info.patient}
             diagnosis={info.reservation.diagnosis}
+            existingPrescriptions={info.existingPrescriptions}
             prescriptionType={'radiology'}
         />
     )

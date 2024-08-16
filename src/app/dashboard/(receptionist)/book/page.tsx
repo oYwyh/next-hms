@@ -1,7 +1,30 @@
-import Booking from "@/app/_components/Booking";
+'use client'
+
+import CheckCredential from "@/app/_components/CheckCredential"
+import ExistingUser from "@/app/dashboard/_components/receptionist/ExistingUser"
+import NewUser from "@/app/dashboard/_components/receptionist/NewUser"
+import { InsertedCredential } from "@/types/index.types"
+import { useState } from "react"
 
 export default function BookPage() {
+    const [creditExists, setCreditExists] = useState<boolean | null>(null)
+    const [credential, setCredential] = useState<InsertedCredential | null>(null)
+
     return (
-        <Booking />
+        <div className="flex flex-col items-center justify-center h-screen gap-2">
+            {!credential ? (
+                <CheckCredential setCreditExists={setCreditExists} setCredential={setCredential} />
+            ) : (
+                <>
+                    {!creditExists ? (
+                        <NewUser credential={credential} />
+                    ) : (
+                        <>
+                            <ExistingUser credential={credential} />
+                        </>
+                    )}
+                </>
+            )}
+        </div>
     )
 }

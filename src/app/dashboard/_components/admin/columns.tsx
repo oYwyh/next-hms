@@ -10,14 +10,14 @@ import {
 } from "@/components/ui/DropdownMenu"
 import { DataTableColumnHeader } from "@/components/ui/table/DataTableColumnHeader"
 import { baseColumns, BaseColumnsTypes, SwitchTableColumn, SelectTableColumn, ExportTableColumn } from "@/constants/columns"
-import { ReceptionistDepartments, TWorkHour } from "@/types/index.types"
+import { TDepartments, TWorkHour } from "@/types/index.types"
 import Actions from "@/app/dashboard/_components/admin/Actions"
 
 
 export type UserColumnsTypes = BaseColumnsTypes;
 
 export type ReceptionistColumnsTypes = BaseColumnsTypes & {
-    department: ReceptionistDepartments
+    department: TDepartments
 }
 export type AdminColmnsTypes = BaseColumnsTypes & {
     super: boolean
@@ -31,7 +31,7 @@ export type DoctorColumnsTypes = BaseColumnsTypes & {
 const userColumns = baseColumns;
 const adminColumns = baseColumns;
 const receptionistColumns = baseColumns.concat('department');
-const doctorColumns = baseColumns.concat('specialty');
+const doctorColumns = baseColumns.concat('fee', 'specialty');
 
 const ActionsTableColumn = [
     {
@@ -65,7 +65,7 @@ const ActionsTableColumn = [
 
 
             return (
-                <Actions row={row} rowData={rowData} workTimeColumnExists={workTimeColumnExists} />
+                <Actions row={row} rowData={rowData} />
             )
         },
     },

@@ -16,7 +16,7 @@ export default function UpdateProfilePicture({ user }: { user: User }) {
                 <AvatarFallback>CN</AvatarFallback>
             </Avatar>
             {user.role != 'user' && (
-                <FileUploader open={open} lastPic={user.picture} setOpen={setOpen} pfp={true} />
+                <FileUploader open={open} limit={1} imgsToDelete={[{ name: user.picture, s3: true }]} setOpen={setOpen} pfp={true} />
             )}
         </div>
     )

@@ -11,7 +11,6 @@ import { string } from "zod";
 import { revalidatePath } from "next/cache";
 import { sql } from "drizzle-orm";
 import { TAddSchema, TEditSchema, TPasswordSchema } from "@/types/operations.types";
-import { generateRandomPassword } from "@/lib/funcs";
 import { book } from "@/actions/appointment.actions";
 import { format } from "date-fns";
 
@@ -41,7 +40,7 @@ export async function add({
 
   const userId = generateIdFromEntropySize(10);
 
-  await db.insert(userTable).values({
+  const [user] = await db.insert(userTable).values({
     id: userId,
     firstname,
     lastname,
@@ -53,11 +52,12 @@ export async function add({
     gender,
     password: passwordHash,
     role: role,
-  });
+  }).returning();
 
   // doctor stuff
+  let doctor;
   if (role == 'doctor' && selectedDays && selectedHours) {
-    const doctor = await doctorRole({ data, selectedDays, selectedHours, userId, operation: 'add' });
+    doctor = await doctorRole({ data, selectedDays, selectedHours, userId: user.id, operation: 'add' });
     if (doctor && doctor?.success) {
       return {
         success: true
@@ -66,8 +66,9 @@ export async function add({
   }
 
   // admin stuff
+  let admin;
   if (role == 'admin') {
-    const admin = await adminRole({ data, userId, operation: 'add' });
+    admin = await adminRole({ data, userId, operation: 'add' });
     if (admin && admin?.success) {
       return {
         success: true
@@ -76,8 +77,9 @@ export async function add({
   }
 
   // receptionist stuff
+  let receptionist;
   if (role == 'receptionist') {
-    const receptionist = await receptionistRole({ data, userId, operation: 'add' });
+    receptionist = await receptionistRole({ data, userId, operation: 'add' });
     if (receptionist && receptionist?.success) {
       return {
         success: true
@@ -87,6 +89,12 @@ export async function add({
 
   revalidatePath('/dashboard');
   return {
+    data: {
+      user: user,
+      doctor,
+      admin,
+      receptionist
+    },
     success: true,
   }
 }
@@ -109,8 +117,6 @@ export async function edit({
 }) {
   const { username, firstname, lastname, phone, nationalId, dob, gender, email } = data;
 
-  const dobString = format(dob, 'yyyy-MM-dd');
-
   const dataToUpdate: Partial<Omit<TEditSchema, 'dob'> & { dob: string }> = {}
 
   if (username) dataToUpdate.username = username
@@ -118,14 +124,14 @@ export async function edit({
   if (lastname) dataToUpdate.lastname = lastname
   if (phone) dataToUpdate.phone = phone
   if (nationalId) dataToUpdate.nationalId = nationalId
-  if (dob) dataToUpdate.dob = dobString
+  if (dob) dataToUpdate.dob = format(dob, 'yyyy-MM-dd')
   if (gender) dataToUpdate.gender = gender
   if (email) dataToUpdate.email = email
 
   const result = await uniqueColumnsValidations(dataToUpdate);
   if (result?.error) return { error: result?.error };
 
-  await db.update(userTable).set(dataToUpdate).where(sql`${userTable.id} = ${userId}`).returning();
+  if (Object.keys(dataToUpdate).length > 0) await db.update(userTable).set(dataToUpdate).where(sql`${userTable.id} = ${userId}`).returning();
 
   // doctor
   if (role == 'doctor' && selectedDays && selectedHours) {

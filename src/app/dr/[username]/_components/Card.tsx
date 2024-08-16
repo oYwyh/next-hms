@@ -1,6 +1,7 @@
 'use client'
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
+import { getAverageRating } from "@/lib/funcs";
 import { TDoctor, TReview, TUser } from "@/types/index.types";
 import { useEffect, useState } from "react";
 import { Rating } from "react-simple-star-rating";
@@ -10,10 +11,7 @@ export default function Card({ user, doctor, reviews }: { user: TUser, doctor: T
 
     useEffect(() => {
         if (reviews.length > 0) {
-            const totalRating = reviews.reduce((sum: any, { review }: { review: any }) => {
-                return sum + parseFloat(review.rating);
-            }, 0);
-            const avgRating = totalRating / reviews.length;
+            const avgRating = getAverageRating(reviews)
             setAverageRating(avgRating);
         }
     }, [reviews]);

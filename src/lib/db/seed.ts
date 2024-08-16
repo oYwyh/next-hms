@@ -2,7 +2,7 @@
 
 import db from "@/lib/db"
 import { adminTable, appointmentTable, doctorTable, receptionistTable, userTable, workDaysTable, workHoursTable } from "@/lib/db/schema";
-import { AppointmentStatus, ReceptionistDepartments } from "@/types/index.types";
+import { AppointmentStatus, TDepartments } from "@/types/index.types";
 import { hash } from "@node-rs/argon2";
 import { generateIdFromEntropySize } from "lucia";
 
@@ -88,6 +88,7 @@ export async function seed() {
         {
             id: 1,
             specialty: "general_surgery",
+            fee: '500',
             userId: doctorId
         }
     ]
@@ -95,7 +96,7 @@ export async function seed() {
     const receptionists = [
         {
             id: 1,
-            department: "opd" as ReceptionistDepartments,
+            department: "opd" as TDepartments,
             userId: receptionistId
         }
     ]

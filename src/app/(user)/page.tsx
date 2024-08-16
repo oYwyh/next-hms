@@ -22,7 +22,7 @@ export default async function UserPage() {
           </Button>
           <Button>
             <Link href={{
-              pathname: "/booking",
+              pathname: "/book",
             }}
             >
               Booking

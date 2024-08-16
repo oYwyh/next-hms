@@ -1,9 +1,9 @@
-import Test from "@/app/dashboard/(admin)/user/[userId]/files/Test";
 import { validateRequest } from "@/lib/auth";
 import db from "@/lib/db";
 import { userMedicalFoldersTable } from "@/lib/db/schema";
 import { sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import Folders from "@/app/_components/Files/Folders";
 
 
 const getFolders = async (userId: string) => {
@@ -18,13 +18,13 @@ const getFolders = async (userId: string) => {
 }
 
 export default async function UserFilesPage({ params: { userId } }: { params: { userId: string } }) {
+    const { user } = await validateRequest();
+    if (!user) return redirect('/auth/login');
     const folders = await getFolders(userId);
-
-    console.log(folders)
 
     return (
         <>
-            <Test folders={folders} userId={userId} />
+            <Folders folders={folders} userId={userId} />
         </>
     )
 }

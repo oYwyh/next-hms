@@ -4,7 +4,7 @@ import db from "@/lib/db";
 import { lucia, validateRequest } from "@/lib/auth";
 import { adminTable, appointmentTable, userTable } from "@/lib/db/schema";
 import { TIndex, uniqueColumnsRegex } from "@/types/index.types";
-import { TCheckSchema, TLoginSchema, TRegisterSchema } from "@/types/auth.types";
+import { TLoginSchema, TRegisterSchema } from "@/types/auth.types";
 import { TbaseSchema } from "@/types/index.types";
 import { uniqueColumnsValidations } from "@/actions/index.actions";
 import { hash, verify } from "@node-rs/argon2";
@@ -116,55 +116,4 @@ export async function logout() {
     sessionCookie.value,
     sessionCookie.attributes,
   );
-}
-
-export async function checkCredit(data: TCheckSchema) {
-
-  const { credential } = data;
-
-  const columns = uniqueColumns
-
-  // Define the type for columnsObject
-  type ColumnsObject = {
-    [key in typeof columns[number]]: true;
-  };
-
-  // Dynamically create the columns object
-  const columnsObject = columns.reduce((acc, column) => {
-    acc[column] = true;
-    return acc;
-  }, {} as ColumnsObject);
-
-
-  const creditExists = await db.query.userTable.findFirst({
-    columns: columnsObject,
-
-    where: (userTable, { eq, or }) =>
-      or(
-        ...columns.map(column => eq(userTable[column], credential))
-      ),
-  });
-
-  if (creditExists) {
-    const matchedColumn = columns.find(column => creditExists[column] === credential);
-    return {
-      column: matchedColumn,
-      exists: true,
-    };
-  } else if (!creditExists) {
-    // Dynamically check the credit against each regex
-    for (const column in uniqueColumnsRegex) {
-      if (uniqueColumnsRegex[column].test(credential)) {
-        return {
-          column,
-          exists: false,
-        };
-      }
-    }
-
-    return {
-      column: 'unknown',
-      exists: false,
-    };
-  }
 }

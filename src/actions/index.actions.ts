@@ -1,12 +1,64 @@
 'use server'
 
 import db from "@/lib/db/index";
-import { TUniqueColumnsSchema } from "@/types/index.types";
+import { InsertedCredential, TIndex, TUniqueColumnsSchema, TUser } from "@/types/index.types";
 import { uniqueColumnsRegex } from "@/types/index.types";
 import { adminTable, appointmentTable, doctorTable, prescriptionTable, receptionistTable, reviewTable, userTable } from "@/lib/db/schema";
 import { revalidatePath } from "next/cache";
-import { and, sql } from "drizzle-orm";
+import { and, eq, or, sql } from "drizzle-orm";
 import { userMedicalFilesTable } from '@/lib/db/schema';
+import { tablesMap, uniqueColumns } from "@/constants";
+import { TCheckSchema } from "@/types/index.types";
+
+export async function checkCredit(data: TCheckSchema) {
+    const { credential } = data;
+
+    const columns = uniqueColumns
+
+    // Define the type for columnsObject
+    type ColumnsObject = {
+        [key in typeof columns[number]]: true;
+    };
+
+    // Dynamically create the columns object
+    const columnsObject = columns.reduce((acc, column) => {
+        acc[column] = true;
+        return acc;
+    }, {} as ColumnsObject);
+
+
+    const creditExists = await db.query.userTable.findFirst({
+        columns: columnsObject,
+
+        where: (userTable, { eq, or }) =>
+            or(
+                ...columns.map(column => eq(userTable[column], credential))
+            ),
+    });
+
+    if (creditExists) {
+        const matchedColumn = columns.find(column => creditExists[column] === credential);
+        return {
+            column: matchedColumn,
+            exists: true,
+        };
+    } else if (!creditExists) {
+        // Dynamically check the credit against each regex
+        for (const column in uniqueColumnsRegex) {
+            if (uniqueColumnsRegex[column].test(credential)) {
+                return {
+                    column,
+                    exists: false,
+                };
+            }
+        }
+
+        return {
+            column: 'unknown',
+            exists: false,
+        };
+    }
+}
 
 export const uniqueColumnsValidations = async (data: Partial<TUniqueColumnsSchema>) => {
     const columns = Object.keys(uniqueColumnsRegex)
@@ -40,8 +92,6 @@ export const uniqueColumnsValidations = async (data: Partial<TUniqueColumnsSchem
     return null; // If there are no errors
 };
 
-
-
 export async function postReview(
     data: any,
     userId: string,
@@ -66,7 +116,6 @@ export async function revalidatePathAction(path: string) {
     return revalidatePath(path)
 }
 
-
 export async function checkPdfOwner(name: string, userId: string) {
     const pdf = await db.query.userMedicalFilesTable.findFirst({
         where: (userMedicalFilesTable: { [key: string]: any }, { eq }) => and(
@@ -78,21 +127,10 @@ export async function checkPdfOwner(name: string, userId: string) {
     return pdf
 }
 
-
 export async function getUserId() {
     const user = await db.query.userTable.findFirst()
     return user?.id
 }
-
-const tablesMap = {
-    user: userTable,
-    admin: userTable,
-    doctor: userTable,
-    receptionist: userTable,
-    appointment: appointmentTable,
-    review: reviewTable,
-    prescription: prescriptionTable,
-};
 
 export async function deleteAction(id: string | number, table: keyof typeof tablesMap) {
     const tableDefinition = tablesMap[table];
@@ -109,3 +147,97 @@ export async function deleteAction(id: string | number, table: keyof typeof tabl
         throw new Error("Deletion failed");
     }
 }
+
+import { AnyPgTable } from 'drizzle-orm/pg-core'; // Import the base type for your tables
+
+// Function to get an object by a specified field with another field for comparison, with multiple joins capability
+export const getByField = async ({
+    value,
+    tableName,
+    fieldToMatch = 'id',
+}: {
+    value: string | number,
+    tableName: keyof typeof tablesMap,
+    fieldToMatch: string, // Field to match with the provided value
+}) => {
+    // Get the main table from the tablesMap
+    const table = tablesMap[tableName];
+
+    if (!table) {
+        throw new Error(`Table ${tableName} does not exist in tablesMap.`);
+    }
+
+    // Get the columns to match the value against
+    const fieldToMatchColumn = (table as { [key: string]: any })[fieldToMatch];
+
+    if (!fieldToMatchColumn) {
+        throw new Error(`Field ${fieldToMatch} does not exist in table ${tableName}.`);
+    }
+
+    // Start building the query
+    let result = db
+        .select()
+        .from(table)
+        .where(eq(fieldToMatchColumn, value))
+
+    // Return the first result, or null if not found
+    return result || null;
+};
+
+
+
+/*
+
+// Function to get an object by a specified field with another field for comparison, with multiple joins capability
+export const getByField = async ({
+    value,
+    tableName,
+    fieldToMatch = 'id',
+    joins = [],
+}: {
+    value: string | number,
+    tableName: keyof typeof tablesMap,
+    fieldToMatch: string, // Field to match with the provided value
+    joins?: Array<{
+        joinTableName: keyof typeof tablesMap; // Table to join with
+        joinCondition: (mainTable: any, joinTable: any) => any; // Join condition as a function
+    }> // Optional: Array of join details
+}) => {
+    // Get the main table from the tablesMap
+    const table = tablesMap[tableName];
+
+    if (!table) {
+        throw new Error(`Table does not exist in tablesMap.`);
+    }
+
+    // Get the columns to match the value against
+    const fieldToMatchColumn = (table as { [key: string]: any })[fieldToMatch];
+
+    if (!fieldToMatchColumn) {
+        throw new Error(`Field ${fieldToMatch} does not exist in table ${tableName}.`);
+    }
+
+    // Start building the query
+    let query = db
+        .select()
+        .from(table)
+        .where(eq(fieldToMatchColumn, value))
+
+    // If joins are provided, apply each join
+    if (joins && joins.length > 0) {
+        joins.forEach(join => {
+            const joinTable = tablesMap[join.joinTableName];
+            if (!joinTable) {
+                throw new Error(`Join table ${join.joinTableName} does not exist in tablesMap.`);
+            }
+            query = query.innerJoin(joinTable, join.joinCondition(table, joinTable));
+        });
+    }
+
+    // Execute the query
+    const [result] = await query.execute();
+
+    // Return the first result, or null if not found
+    return result || null;
+};
+*/

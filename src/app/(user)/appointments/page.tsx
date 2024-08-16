@@ -6,7 +6,7 @@ export default function AppointmentsPage() {
     return (
         <>
             <Button>
-                <Link href={'/booking'}>Book an appointment</Link>
+                <Link href={'/book'}>Book an appointment</Link>
             </Button>
             <ManageAppointmentsPage />
         </>

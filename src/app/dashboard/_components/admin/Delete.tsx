@@ -12,10 +12,9 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/AlertDialog"
 import { Dispatch, SetStateAction, useState } from "react";
-import { deleteUser } from "@/actions/operations.actions";
 import { TTables } from "@/types/index.types";
 import { deleteAction } from "@/actions/index.actions";
-export default function Delete({ id, table, setPopOpen }: { id: string | number, table: TTables, setPopOpen: Dispatch<SetStateAction<boolean | undefined>>; }) {
+export default function Delete({ id, table, setPopOpen }: { id: string | number, table: TTables, setPopOpen: Dispatch<SetStateAction<boolean>>; }) {
 
     const [open, setOpen] = useState<boolean>()
 

@@ -1,6 +1,5 @@
 'use client'
 
-
 import {
     AlertDialog,
     AlertDialogAction,
@@ -14,7 +13,7 @@ import {
 } from "@/components/ui/AlertDialog"
 
 import Name, { TnameSchema } from "@/components/ui/custom/Name";
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { createFolder, deleteFolder } from "@/actions/user.actions";
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
@@ -22,18 +21,31 @@ import { Label } from "@/components/ui/Lable"
 import { useRouter } from "next/navigation";
 import { Delete, Trash, Trash2 } from "lucide-react";
 import { Toggle } from "@/components/ui/Toggle";
+import { useQuery } from "@tanstack/react-query";
 
-type Ttest = {
+type TFolders = {
     folders: { id: number; name: string; userId: string; files: { id: number; name: string; folderId: number; }[]; }[]
-    userId: string
+    userId: string,
+    handleSheet?: (folderId: number) => void
 }
 
-export default function Test({ folders, userId }: Ttest) {
+export default function Folders({ folders, userId, handleSheet }: TFolders) {
     const [error, setError] = useState<string | undefined>();
 
     const router = useRouter()
 
-    const handleClick = async (data: TnameSchema) => {
+    const { data: user } = useQuery({
+        queryKey: ['user'],
+        queryFn: async () => {
+            const response = await fetch('/api/user/info');
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return await response.json();
+        },
+    })
+
+    const handleCreateFolder = async (data: TnameSchema) => {
         setError(undefined)
         const result = await createFolder(data, userId);
 
@@ -41,7 +53,8 @@ export default function Test({ folders, userId }: Ttest) {
     }
 
     const handleRedirect = (folderId: number) => {
-        router.push(`/files/${folderId}`)
+        if (user.role == 'user') router.push(`/files/${folderId}`)
+        if (user.role == 'admin') router.push(`/dashboard/users/${userId}/files/${folderId}`)
     }
 
     const hadnleDelete = async (folderId: number) => {
@@ -53,11 +66,13 @@ export default function Test({ folders, userId }: Ttest) {
         <div className='p-4'>
             <div className="w-full h-full flex flex-row justify-between">
                 <h1 className="text-3xl font-bold">Folders</h1>
-                <Name
-                    handleClick={handleClick}
-                    title={'New folder'}
-                    name="folder"
-                />
+                {user && user.id === userId && (
+                    <Name
+                        handleClick={handleCreateFolder}
+                        title={'New folder'}
+                        name="folder"
+                    />
+                )}
             </div>
             {error && <p className="text-red-500 font-bold py-2">{error}</p>}
             {folders.length === 0 ?
@@ -95,8 +110,7 @@ export default function Test({ folders, userId }: Ttest) {
                                                 ease-in-out 
                                                 hover:bg-[#E1E1E1]
                                             "
-                                            onClick={() => handleRedirect(folder.id)}
-
+                                            onClick={() => handleSheet ? handleSheet(folder.id) : handleRedirect(folder.id)}
                                         >
                                             <p className="text-2xl font-bold capitalize">{folder.name}</p>
                                             <p className="text-l">Files: {folder.files.length}</p>

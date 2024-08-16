@@ -28,7 +28,7 @@ export default async function Home() {
               }
               {user?.role == 'user' &&
                 <div className="flex flex-row gap-3">
-                  <Link href="/booking">
+                  <Link href="/book">
                     <Button>
                       Book an appointment
                     </Button>

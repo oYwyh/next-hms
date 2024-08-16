@@ -3,7 +3,7 @@ import { adminTable, doctorTable, receptionistTable, userTable, workDaysTable, w
 import { sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { TAddSchema, TEditSchema } from "@/types/operations.types";
-import { ReceptionistDepartments, THour, UserRoles } from "@/types/index.types";
+import { TDepartments, THour, UserRoles } from "@/types/index.types";
 
 
 export async function doctorRole({
@@ -19,7 +19,7 @@ export async function doctorRole({
   userId: string,
   operation: "add" | "edit"
 }) {
-  const { specialty } = data;
+  const { specialty, fee } = data;
 
   const groupedHours = selectedHours.reduce((acc, { day: selectedDay, value }) => {
     if (!acc[selectedDay]) {
@@ -45,6 +45,7 @@ export async function doctorRole({
     const doctor = await db.insert(doctorTable).values({
       userId: userId,
       specialty: specialty,
+      fee: String(fee),
     }).returning({ id: doctorTable.id });
 
     for (const day of selectedDays) {
@@ -70,6 +71,11 @@ export async function doctorRole({
     if (specialty) {
       await db.update(doctorTable).set({
         specialty: specialty,
+      }).where(sql`${doctorTable.userId} = ${userId}`).returning();
+    }
+    if (fee) {
+      await db.update(doctorTable).set({
+        fee: String(fee),
       }).where(sql`${doctorTable.userId} = ${userId}`).returning();
     }
 
@@ -132,13 +138,13 @@ export const receptionistRole = async ({
 }) => {
   if (operation == 'add') {
     await db.insert(receptionistTable).values({
-      department: data.department as ReceptionistDepartments,
+      department: data.department as TDepartments,
       userId: userId,
     })
   } else if (operation == 'edit') {
     if (data.department) {
       await db.update(receptionistTable).set({
-        department: data.department as ReceptionistDepartments,
+        department: data.department as TDepartments,
       }).where(sql`${receptionistTable.userId} = ${userId}`).returning();
     }
   }

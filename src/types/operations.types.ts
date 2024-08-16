@@ -3,15 +3,32 @@ import { z } from "zod";
 
 export const editSchema = baseSchema.extend({
     specialty: z.string().optional(),
+    fee: z.string().or(z.number()).optional(),
     days: z.array(z.string()).optional(),
     department: z.string().optional(),
 }).superRefine((data, ctx) => {
-    if (data.role === 'doctor' && !data.specialty) {
-        ctx.addIssue({
-            code: "custom",
-            message: "Specialty is required",
-            path: ["specialty"],
-        });
+    if (data.role == 'doctor') {
+        if (!data.specialty) {
+            ctx.addIssue({
+                code: "custom",
+                message: "Specialty is required",
+                path: ["specialty"],
+            })
+        }
+        if (!data.fee) {
+            ctx.addIssue({
+                code: "custom",
+                message: "Fee is required",
+                path: ["fee"],
+            })
+        }
+        if (isNaN(Number(data.fee))) {
+            ctx.addIssue({
+                code: "custom",
+                message: "Fee must be a number",
+                path: ["fee"],
+            })
+        }
     }
 }).superRefine((data, ctx) => {
     if (data.role == 'receptionist') {
@@ -28,6 +45,7 @@ export const editSchema = baseSchema.extend({
 export type TEditSchema = z.infer<typeof editSchema>;
 
 export const addSchema = baseSchema.extend({
+    fee: z.string().or(z.number()).optional(),
     specialty: z.string().optional(),
     days: z.array(z.string()).optional(),
     department: z.string().optional(),
@@ -43,6 +61,20 @@ export const addSchema = baseSchema.extend({
                 code: "custom",
                 message: "Specialty is required",
                 path: ["specialty"],
+            })
+        }
+        if (!data.fee) {
+            ctx.addIssue({
+                code: "custom",
+                message: "Fee is required",
+                path: ["fee"],
+            })
+        }
+        if (isNaN(Number(data.fee))) {
+            ctx.addIssue({
+                code: "custom",
+                message: "Fee must be a number",
+                path: ["fee"],
             })
         }
     }

@@ -4,28 +4,32 @@ import { validateRequest } from "@/lib/auth";
 import db from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { appointmentTable, prescriptionTable, reservationTable, userTable } from "@/lib/db/schema";
+import { appointmentTable, doctorTable, prescriptionTable, receiptTable, reservationTable, userTable } from "@/lib/db/schema";
 import { TdiagnosisSchema } from "@/types/dashboard.types";
+import { TDepartments, UserRoles } from "@/types/index.types";
 
 export async function book({
     userId,
     doctorId,
     date,
     from,
-    to
+    to,
+    department = 'opd'
 }: {
     userId: string,
     doctorId: number,
     date: string,
     from: string,
-    to: string
+    to: string,
+    department?: TDepartments
 }) {
     const appointment = await db.insert(appointmentTable).values({
         userId: userId,
         doctorId: doctorId,
         date: date,
         from: from,
-        to: to
+        to: to,
+        department
     }).returning();
 
     if (appointment) {
@@ -36,24 +40,30 @@ export async function book({
     }
 }
 
-export async function createReservation(
+export async function createReservation({
+    appointmentId,
+    data,
+    laboratories,
+    radiologies,
+    medicines
+}: {
     appointmentId: number,
     data: TdiagnosisSchema,
-    selectedLaboratory: string[],
-    selectedRadiology: string[],
-    selectedMedicine: string[]
-) {
-    const laboratoryText = selectedLaboratory.join(',');
-    const radiologyText = selectedRadiology.join(',');
-    const medicineText = selectedMedicine.join(',');
+    laboratories: string[],
+    radiologies: string[],
+    medicines: string[]
+}) {
+    const laboratoryText = laboratories.join(',');
+    const radiologyText = radiologies.join(',');
+    const medicineText = medicines.join(',');
 
     const reservation = await db.insert(reservationTable).values({
         appointmentId: appointmentId,
         history: data.history,
         diagnosis: data.diagnosis,
-        laboratory: laboratoryText,
-        radiology: radiologyText,
-        medicine: medicineText
+        laboratories: laboratoryText,
+        radiologies: radiologyText,
+        medicines: medicineText
     }).returning();
 
     await db.insert(prescriptionTable).values({
@@ -71,13 +81,19 @@ export async function createReservation(
     }
 }
 
-export async function createPrescription(
+export async function createPrescription({
+    appointmentId,
+    reservationId,
+    name,
+    type,
+    last
+}: {
     appointmentId: string | number,
     reservationId: string | number,
-    value: string,
+    name: string,
     type: 'laboratory' | 'radiology' | 'medicine',
     last: boolean
-) {
+}) {
 
     if (last == true) {
         await db.update(appointmentTable)
@@ -89,7 +105,7 @@ export async function createPrescription(
     }
     const prescription = await db.update(prescriptionTable)
         .set({
-            [type]: value
+            [type]: name
         })
         .where(sql`${prescriptionTable.reservationId} = ${reservationId}`).returning();
 
@@ -108,7 +124,6 @@ export async function cancel(
     appointmentId: string | number
 ) {
     const { user } = await validateRequest()
-    console.log('a7a')
     const appointment = await db.delete(appointmentTable).where(
         sql`${appointmentTable.id} = ${appointmentId}`
     )
@@ -128,3 +143,4 @@ export async function cancel(
         }
     }
 }
+

@@ -3,50 +3,34 @@ import db from '@/lib/db';
 import { doctorTable, userTable, workDaysTable, workHoursTable } from '@/lib/db/schema';
 import { and, eq } from 'drizzle-orm';
 
-export async function GET(request: Request) {
-    const { searchParams } = new URL(request.url);
-    const doctor = searchParams.get('doctor') || 'all';
-    const specialty = searchParams.get('specialty') || 'all';
-
-    let doctorRecords;
+async function fetchDoctorRecords(doctor: string, specialty: string) {
     if (doctor === 'all') {
-        if (specialty === 'all') {
-            doctorRecords = await db
-                .select()
+        return specialty === 'all'
+            ? db.select()
                 .from(userTable)
                 .leftJoin(doctorTable, eq(doctorTable.userId, userTable.id))
                 .leftJoin(workDaysTable, eq(workDaysTable.doctorId, doctorTable.id))
                 .leftJoin(workHoursTable, eq(workHoursTable.workDayId, workDaysTable.id))
-                .where(eq(userTable.role, 'doctor'));
-        } else {
-            doctorRecords = await db
-                .select()
+                .where(eq(userTable.role, 'doctor'))
+            : db.select()
                 .from(userTable)
                 .leftJoin(doctorTable, eq(doctorTable.userId, userTable.id))
                 .leftJoin(workDaysTable, eq(workDaysTable.doctorId, doctorTable.id))
                 .leftJoin(workHoursTable, eq(workHoursTable.workDayId, workDaysTable.id))
-                .where(and(
-                    eq(userTable.role, 'doctor'),
-                    eq(doctorTable.specialty, specialty)
-                ));
-        }
+                .where(and(eq(userTable.role, 'doctor'), eq(doctorTable.specialty, specialty)));
     } else {
-        doctorRecords = await db
-            .select()
+        return db.select()
             .from(userTable)
             .leftJoin(doctorTable, eq(doctorTable.userId, userTable.id))
             .leftJoin(workDaysTable, eq(workDaysTable.doctorId, doctorTable.id))
             .leftJoin(workHoursTable, eq(workHoursTable.workDayId, workDaysTable.id))
-            .where(and(
-                eq(userTable.username, doctor),
-                eq(userTable.role, 'doctor')
-            ));
+            .where(and(eq(userTable.username, doctor), eq(userTable.role, 'doctor')));
     }
+}
 
-    // Process the results to aggregate workHours for each work_day
-    const doctors = doctorRecords.reduce((acc: any, record: any) => {
+async function processDoctorRecords(doctorRecords: any[]) {
+    return doctorRecords.reduce((acc: any, record: any) => {
         const userId = record.user.id;
-
         if (!acc[userId]) {
             acc[userId] = {
                 user: record.user,
@@ -54,7 +38,6 @@ export async function GET(request: Request) {
                 workDays: []
             };
         }
-
         const workDayIndex = acc[userId].workDays.findIndex((day: any) => day.id === record.workDays.id);
         if (workDayIndex === -1) {
             acc[userId].workDays.push({
@@ -64,14 +47,21 @@ export async function GET(request: Request) {
         } else {
             acc[userId].workDays[workDayIndex].workHours.push({ ...record.workHours });
         }
-
         return acc;
     }, {});
+}
 
-    // Convert the aggregated doctors object to an array
-    const result = Object.values(doctors);
+export async function GET(request: Request) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const doctor = searchParams.get('doctor') || 'all';
+        const specialty = searchParams.get('specialty') || 'all';
 
-    console.log(result);
+        const doctorRecords = await fetchDoctorRecords(doctor, specialty);
+        const doctors = await processDoctorRecords(doctorRecords);
 
-    return NextResponse.json(result);
+        return NextResponse.json(Object.values(doctors));
+    } catch (error) {
+        return NextResponse.error();
+    }
 }

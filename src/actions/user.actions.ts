@@ -3,34 +3,10 @@
 import { TnameSchema } from "@/components/ui/custom/Name";
 import db from "@/lib/db"
 import { appointmentTable, doctorTable, reviewTable, userMedicalFilesTable, userMedicalFoldersTable, userTable } from "@/lib/db/schema";
-import { deleteFiles } from "@/lib/r2";
+import { deleteFile } from "@/lib/r2";
 import { and, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
-
-export async function appointmentDetails(
-    appointmentId: string | number | undefined
-) {
-    const appointment = await db.query.appointmentTable.findFirst({
-        where: sql`${appointmentTable.id} = ${appointmentId}`
-    })
-
-    const user = await db.query.userTable.findFirst({
-        where: sql`${userTable.id} = ${appointment?.userId}`
-    })
-
-    const doctor = await db.query.doctorTable.findFirst({
-        where: sql`${doctorTable.id} = ${appointment?.doctorId}`,
-    })
-
-    if (!doctor || !user || !appointment) throw new Error('Failed to get appointment details');
-
-    return {
-        appointment,
-        user,
-        doctor
-    }
-}
 
 export async function createFolder(
     data: TnameSchema,
@@ -69,20 +45,16 @@ export async function deleteFolder(
         sql`${userMedicalFilesTable.folderId} = ${folderId}`
     );
 
-    const filesToDelete = files.map((file) => {
-        return file.name;
-    });
+    await Promise.all(files.map(async (file) => {
+        await deleteFile({ name: file.name, s3: true, table: 'userFiles', id: file.id });
+    }));
 
-    if (filesToDelete.length > 0) {
-        console.log('filesToDelete', filesToDelete);
-        await deleteFiles(filesToDelete, true);
-    }
 
     const folder = await db.delete(userMedicalFoldersTable).where(
         sql`${userMedicalFoldersTable.id} = ${folderId}`
     );
 
-    if (folder || filesToDelete.length > 0) {
+    if (folder) {
         revalidatePath('/user/files');
         return {
             deleted: true

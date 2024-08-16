@@ -3,13 +3,14 @@ import { z } from "zod";
 
 export type AppointmentStatus = "pending" | "completed" | "canceled";
 export type UniqueColumns = 'email' | 'phone' | 'nationalId' | 'username'
-export type ReceptionistDepartments = "opd";
+export type TDepartments = "opd" | 'ipd';
 export type UserRoles = "admin" | "user" | "doctor" | 'receptionist';
-export type Prescriptions = 'laboratory' | 'radiology' | 'medicine';
+export type TPrescriptions = 'laboratory' | 'radiology' | 'medicine';
 export type THour = { day: string; value: { from: string; to: string } };
 export type TGenders = 'male' | 'female'
 export type TTables = "admin" | "doctor" | "user" | "receptionist" | "appointment" | "prescription" | "review";
 export type TIndex<T> = { [key: string]: T }
+export type TReceiptTypes = "credit" | "cash" | 'electronic';
 
 export type TUser = {
   id: string;
@@ -22,17 +23,19 @@ export type TUser = {
   dob: string;
   gender: TGenders;
   picture: string;
-  role: string;
+  role: UserRoles;
   createdAt: Date;
   updatedAt: Date;
-  doctor?: TDoctor;
-  admin?: TAdmin;
-  receptionist?: TReceptionist;
+  // doctor?: TDoctor;
+  // admin?: TAdmin;
+  // receptionist?: TReceptionist;
+  appointments?: TAppointment[];
 };
 
 export type TDoctor = {
   id: number;
   specialty: string;
+  fee: string | number;
   userId: string;
 };
 
@@ -44,7 +47,7 @@ export type TAdmin = {
 
 export type TReceptionist = {
   id: number;
-  type: ReceptionistDepartments;
+  department: TDepartments;
   userId: string;
 };
 
@@ -52,6 +55,7 @@ export type TWorkDay = {
   id: number;
   doctorId: number;
   day: string;
+  workHours: TWorkHour[];
 };
 
 export type TWorkHour = {
@@ -64,22 +68,22 @@ export type TWorkHour = {
 export type TAppointment = {
   id: number;
   userId: string;
-  doctorId: string;
+  doctorId: number;
   date: string;
   from: string;
   to: string;
   status: AppointmentStatus;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 export type TReservation = {
   id: number;
   history: string;
   diagnosis: string;
-  laboratory: string;
-  radiology: string;
-  medicine: string;
+  laboratories: string;
+  radiologies: string;
+  medicines: string;
   appointmentId: number;
 };
 
@@ -102,22 +106,52 @@ export type TReview = {
   updatedAt: string;
 };
 
-export type TUserMedicalFolders = {
+export type TUserMedicalFolder = {
   id: number;
   name: string;
   userId: string;
   createdAt: string;
   updatedAt: string;
-  files: TUserMedicalFiles[];
+  files: TUserMedicalFile[];
 };
 
-export type TUserMedicalFiles = {
+export type TUserMedicalFile = {
   id: number;
   name: string;
+  userId: string | number
+  type: string;
   folderId: number;
   createdAt: string;
   updatedAt: string;
 };
+
+export type TFee = {
+  id: number;
+  service: string;
+  amount: number;
+  date: Date;
+  type: TReceiptTypes;
+  fee: number;
+  doctorId: number;
+  userId: number;
+  receptionistId: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type TReceipt = {
+  id: number;
+  service: string;
+  amount: string;
+  date: Date | string;
+  userId: string;
+  doctorId: number;
+  appointmentId: number;
+  receptionistId: number;
+  type: TReceiptTypes;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 export type TSession = {
   id: string;
@@ -148,6 +182,18 @@ export const baseSchema = z.object({
 })
 
 export type TbaseSchema = z.infer<typeof baseSchema>;
+
+
+export const checkSchema = z.object({
+  credential: z.string(),
+});
+
+export type TCheckSchema = z.infer<typeof checkSchema>;
+
+export type InsertedCredential = {
+  column: UniqueColumns;
+  credential: string;
+};
 
 export const uniqueColumnsSchema = z.object({
   username: z.string().min(1, "Username is required"),

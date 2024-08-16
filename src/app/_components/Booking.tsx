@@ -5,11 +5,24 @@ import { Button } from "@/components/ui/Button";
 import FormField from "@/components/ui/custom/FormField";
 import { Form } from "@/components/ui/Form";
 import { useForm } from "react-hook-form";
-import DoctorCard from '@/app/_components/appointment/drCard';
+import DoctorCard from '@/app/_components/drCard';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { specialties } from '@/constants';
+import { invalidateQueries } from '@/lib/funcs';
+import { TDepartments, TReceiptTypes } from '@/types/index.types';
 
-export default function Booking() {
+export interface IBookingData {
+    doctorId: number;
+    service: string;
+    amount: string;
+    date: string;
+    from: string;
+    to: string;
+    department: TDepartments;
+    receiptType: TReceiptTypes;
+}
+
+export default function Booking({ role, userId, setBookingData }: { role: 'receptionist' | 'user', userId?: string, setBookingData?: React.Dispatch<React.SetStateAction<IBookingData | undefined>> }) {
     const [specialty, setSpecialty] = useState<string>('all');
     const [selectDoctor, setSelectDoctor] = useState<string>('');
     const [doctors, setDoctors] = useState([]);
@@ -47,9 +60,9 @@ export default function Booking() {
 
 
     const { data: user } = useQuery({
-        queryKey: ['user', 'id'],
+        queryKey: ['user'],
         queryFn: async () => {
-            const response = await fetch('/api/global/user');;
+            const response = await fetch('/api/user/info');
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
@@ -66,7 +79,7 @@ export default function Booking() {
 
     useEffect(() => {
         console.log(specialty)
-        queryClient.invalidateQueries({ queryKey: ['doctors', 'list', specialty] })
+        invalidateQueries({ queryClient, key: ['doctors', 'list', specialty] })
         form.resetField('doctor');
     }, [specialty])
 
@@ -76,9 +89,10 @@ export default function Booking() {
             doctor: 'all'
         }
     })
+
     const onSubmit = async (data: any) => {
         setSelectDoctor(data.doctor);
-        queryClient.invalidateQueries({ queryKey: ['doctors', selectDoctor] })
+        invalidateQueries({ queryClient, key: ['doctors', selectDoctor] })
     }
 
     const specialtyOpts = [
@@ -90,8 +104,8 @@ export default function Booking() {
         <div className='flex flex-col gap-2'>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <div className="flex flex-row gap-2 items-center w-fit">
-                        <FormField form={form} name="specialty" select="specialty" specialties={specialtyOpts} setState={setSpecialty} />
+                    <div className="flex flex-row items-center gap-2 w-fit">
+                        <FormField form={form} name="specialty" select="specialty" label='' specialties={specialtyOpts} setState={setSpecialty} />
                         {isDoctorsListLoading ? (
                             <>Loading...</>
                         ) : (
@@ -111,10 +125,18 @@ export default function Booking() {
                         <>
                             {doctors.length != 0 ? (doctors.map((doctor: any) => {
                                 return (
-                                    <DoctorCard key={doctor.user.id} doctor={doctor} userId={user.role == 'user' ? user.id : null} />
+                                    <>
+                                        <DoctorCard
+                                            key={doctor.user.id}
+                                            doctor={doctor}
+                                            userId={userId || user.id}
+                                            role={role}
+                                            setBookingData={setBookingData}
+                                        />
+                                    </>
                                 )
                             })) : (
-                                <p className='text-red-500 font-bold text-xl'>No doctors found</p>
+                                <p className='text-xl font-bold text-red-500'>No doctors found</p>
                             )}
                         </>
                     )

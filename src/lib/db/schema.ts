@@ -30,10 +30,12 @@ export const timestamps = (): {
   }).defaultNow().notNull(),
 });
 
+export const departments = pgEnum("departments", ["opd", 'ipd']);
 export const UserRole = pgEnum("userRole", ["admin", "user", "doctor", 'receptionist']);
+export const UserGenders = pgEnum("userGender", ['male', 'female'])
 
 export const userTable = pgTable("user", {
-  id: text("id").primaryKey().unique().notNull(),
+  id: text("id").primaryKey().notNull(),
   firstname: text("firstname").notNull(),
   lastname: text("lastname").notNull(),
   username: text("username").unique().notNull(),
@@ -41,7 +43,7 @@ export const userTable = pgTable("user", {
   phone: text("phone").unique().notNull(),
   nationalId: text("nationalId").unique().notNull(),
   dob: text("dob").notNull(), // date of birth
-  gender: text("gender").notNull(),
+  gender: UserGenders("gender").notNull(),
   picture: text("picture").default('default.jpg').notNull(),
   password: text("password").notNull(),
   role: UserRole("role").default("user"),
@@ -65,6 +67,8 @@ export const userRelations = relations(userTable, ({ one, many }) => ({
     fields: [userTable.id],
     references: [receptionistTable.userId],
   }),
+  receipts: many(receiptTable)
+
 }));
 
 export const adminTable = pgTable("admin", {
@@ -81,8 +85,9 @@ export const adminTable = pgTable("admin", {
 // ? Doctor
 
 export const doctorTable = pgTable("doctor", {
-  id: serial("id").primaryKey().unique().notNull(),
+  id: serial("id").primaryKey().notNull(),
   specialty: text("specialty"),
+  fee: numeric("fee").notNull(),
   userId: text("userId")
     .unique()
     .references(() => userTable.id, {
@@ -100,10 +105,11 @@ export const doctorRelations = relations(doctorTable, ({ one, many }) => ({
   appointments: many(appointmentTable),
   workDays: many(workDaysTable),
   reviews: many(reviewTable), // New relation
+  receipts: many(receiptTable)
 }));
 
 export const workDaysTable = pgTable('workDays', {
-  id: serial('id').primaryKey().unique(),
+  id: serial('id').primaryKey(),
   doctorId: integer('doctorId').notNull().references(() => doctorTable.id, { onDelete: 'cascade', onUpdate: "cascade" }),
   day: text('day').notNull(), // e.g., 'Monday', 'Tuesday', etc.
 });
@@ -118,7 +124,7 @@ export const workDayRelations = relations(workDaysTable, ({ one, many }) => ({
 }));
 
 export const workHoursTable = pgTable('workHours', {
-  id: serial('id').primaryKey().unique(),
+  id: serial('id').primaryKey(),
   workDayId: integer('workDayId').notNull().references(() => workDaysTable.id, { onDelete: 'cascade', onUpdate: "cascade" }),
   from: text('from').notNull(),
   to: text('to').notNull(),
@@ -133,12 +139,9 @@ export const workHourRelations = relations(workHoursTable, ({ one }) => ({
 
 
 // ? Receptionist
-
-export const ReceptionistDepartment = pgEnum("receptionistDepartment", ["opd"]);
-
 export const receptionistTable = pgTable("receptionist", {
-  id: serial("id").primaryKey().unique().notNull(),
-  department: ReceptionistDepartment("department").default("opd").notNull(),
+  id: serial("id").primaryKey().notNull(),
+  department: departments("department").default("opd").notNull(),
   userId: text("userId")
     .unique()
     .references(() => userTable.id, {
@@ -148,11 +151,12 @@ export const receptionistTable = pgTable("receptionist", {
     .notNull(),
 });
 
-export const receptionistRelations = relations(receptionistTable, ({ one }) => ({
+export const receptionistRelations = relations(receptionistTable, ({ one, many }) => ({
   user: one(userTable, {
     fields: [receptionistTable.userId],
     references: [userTable.id],
   }),
+  receipts: many(receiptTable)
 }))
 
 // ? Appointment
@@ -160,10 +164,11 @@ export const receptionistRelations = relations(receptionistTable, ({ one }) => (
 export const Status = pgEnum("status", ["pending", "cancelled", "completed"]);
 
 export const appointmentTable = pgTable("appointment", {
-  id: serial('id').primaryKey().unique(),
+  id: serial('id').primaryKey(),
   date: text("date").notNull(),
   from: text("from").notNull(),
   to: text("to").notNull(),
+  department: departments("department").default('opd').notNull(),
   userId: text("userId")
     .references(() => userTable.id, {
       onDelete: "cascade",
@@ -193,19 +198,23 @@ export const appointmentRelation = relations(appointmentTable, ({ one }) => ({
     fields: [appointmentTable.doctorId],
     references: [doctorTable.id],
   }),
+  receipt: one(receiptTable, {
+    fields: [appointmentTable.id],
+    references: [receiptTable.appointmentId],
+  }),
   review: one(reviewTable, {
     fields: [appointmentTable.id],
     references: [reviewTable.appointmentId],
-  })
+  }),
 }))
 
 export const reservationTable = pgTable("reservation", {
-  id: serial('id').primaryKey().unique(),
+  id: serial('id').primaryKey(),
   history: text("history").notNull(),
   diagnosis: text("diagnosis").notNull(),
-  laboratory: text("laboratory").notNull(),
-  radiology: text("radiology").notNull(),
-  medicine: text("medicine").notNull(),
+  laboratories: text("laboratory").notNull(),
+  radiologies: text("radiology").notNull(),
+  medicines: text("medicine").notNull(),
   appointmentId: integer("appointmentId").notNull().references(() => appointmentTable.id, { onDelete: 'cascade', onUpdate: "cascade" }),
 });
 
@@ -221,7 +230,7 @@ export const reservationRelation = relations(reservationTable, ({ one }) => ({
 }))
 
 export const prescriptionTable = pgTable("prescription", {
-  id: serial('id').primaryKey().unique(),
+  id: serial('id').primaryKey(),
   laboratory: text("laboratory").notNull(),
   radiology: text("radiology").notNull(),
   medicine: text("medicine").notNull(),
@@ -270,7 +279,7 @@ export const reviewRelations = relations(reviewTable, ({ one }) => ({
 // ? Files
 
 export const userMedicalFoldersTable = pgTable("userMedicalFolders", {
-  id: serial('id').primaryKey().unique(),
+  id: serial('id').primaryKey(),
   name: text("name").notNull(),
   userId: text("userId").notNull().references(() => userTable.id, { onDelete: 'cascade', onUpdate: "cascade" }),
   ...timestamps(),
@@ -285,8 +294,9 @@ export const userMedicalFoldersRelations = relations(userMedicalFoldersTable, ({
 }))
 
 export const userMedicalFilesTable = pgTable("userMedicalFiles", {
-  id: serial('id').primaryKey().unique(),
+  id: serial('id').primaryKey(),
   name: text("name").notNull(),
+  type: text("type").notNull(),
   folderId: integer("folderId").notNull().references(() => userMedicalFoldersTable.id, { onDelete: 'cascade', onUpdate: "cascade" }),
   userId: text("userId").notNull().references(() => userTable.id, { onDelete: 'cascade', onUpdate: "cascade" }),
   ...timestamps(),
@@ -303,6 +313,45 @@ export const userMedicalFilesRelations = relations(userMedicalFilesTable, ({ one
   }),
 }))
 
+// ? Receipt
+
+export const receiptTable = pgTable("receipt", {
+  id: serial("id").primaryKey(),
+  service: text("service").notNull(),
+  amount: numeric("amount").notNull(),
+  userId: text("userId")
+    .notNull()
+    .references(() => userTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
+  doctorId: integer("doctorId")
+    .notNull()
+    .references(() => doctorTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
+  appointmentId: integer("appointmentId")
+    .notNull()
+    .references(() => appointmentTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
+  receptionistId: integer("receptionistId").references(() => receptionistTable.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
+  date: timestamp("date", { withTimezone: true }).notNull(),
+  type: text("type").notNull(),
+  ...timestamps(),
+});
+
+export const receiptRelations = relations(receiptTable, ({ one }) => ({
+  user: one(userTable, {
+    fields: [receiptTable.userId],
+    references: [userTable.id],
+  }),
+  doctor: one(doctorTable, {
+    fields: [receiptTable.doctorId],
+    references: [doctorTable.id],
+  }),
+  appointment: one(appointmentTable, {
+    fields: [receiptTable.appointmentId],
+    references: [appointmentTable.id],
+  }),
+  receptionist: one(receptionistTable, {
+    fields: [receiptTable.receptionistId],
+    references: [receptionistTable.id],
+  }),
+}));
 
 // ? session
 

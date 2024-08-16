@@ -3,7 +3,7 @@ import db from "@/lib/db";
 import { userMedicalFoldersTable } from "@/lib/db/schema";
 import { sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import Test from "./Test";
+import Folders from "../../_components/Files/Folders";
 
 
 const getFolders = async (userId: string) => {
@@ -24,7 +24,7 @@ export default async function UserFilesPage() {
 
     return (
         <>
-            <Test folders={folders} userId={user.id} />
+            <Folders folders={folders} userId={user.id} />
         </>
     )
 }

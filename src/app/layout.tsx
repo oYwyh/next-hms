@@ -1,4 +1,4 @@
-import AppointmentContextProvider from "@/Providers/AppointmentContext";
+import ReservationContextProvider from "@/Providers/ReservationContext.provider";
 
 import type { Metadata } from "next";
 import { Inter as FontSans } from "next/font/google";
@@ -34,9 +34,9 @@ export default function RootLayout({
       >
         <Toaster />
         <ReactQueryProvider>
-          <AppointmentContextProvider>
+          <ReservationContextProvider>
             {children}
-          </AppointmentContextProvider>
+          </ReservationContextProvider>
         </ReactQueryProvider>
 
       </body>

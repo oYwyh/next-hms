@@ -36,7 +36,7 @@ import { Switch } from "@/components/ui/Switch";
 import { Dispatch, SetStateAction } from "react";
 import { Textarea } from "@/components/ui/Textarea";
 import { Rating } from "react-simple-star-rating";
-import { receptionistDepartments, specialties as specialtyOpts } from "@/constants";
+import { departments, receiptTypes, specialties as specialtyOpts } from "@/constants";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 
@@ -142,14 +142,16 @@ export default function FormField({
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
+                          disabled={disabled}
                           variant={"outline"}
+                          className={`${disabled && "cursor-not-allowed"}`}
                         >
                           {field.value ? (
                             format(field.value, "PPP")
                           ) : (
                             <span>Pick a date</span>
                           )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          <CalendarIcon className="w-4 h-4 ml-auto opacity-50" />
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
@@ -207,7 +209,7 @@ export default function FormField({
                         {value
                           ? specialties.find((specialty) => specialty.value === value)?.label
                           : "Select specialty"}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        <ChevronsUpDown className="w-4 h-4 ml-2 opacity-50 shrink-0" />
                       </Button>
                     </FormControl>
                   </PopoverTrigger>
@@ -243,7 +245,7 @@ export default function FormField({
                 <FormMessage>{fieldError?.message}</FormMessage>
               </div>
             )}
-            {select == "receptionistDepartment" && (
+            {select == "department" && (
               <div className="flex flex-col gap-2">
                 {label != '' && (
                   <FormLabel className="capitalize">{label ? label : name}</FormLabel>
@@ -254,33 +256,33 @@ export default function FormField({
                       <Button
                         variant="outline"
                         role="combobox"
-                        className={cn("w-[200px] justify-between", !value && "text-muted-foreground")}
+                        className={cn("w-full justify-between", !value && "text-muted-foreground")}
                       >
                         {value
-                          ? receptionistDepartments.find((receptionistDepartment) => receptionistDepartment.value === value)?.label
+                          ? departments.find((department) => department.value === value)?.label
                           : "Select Department"}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        <ChevronsUpDown className="w-4 h-4 ml-2 opacity-50 shrink-0" />
                       </Button>
                     </FormControl>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[200px] p-0">
+                  <PopoverContent className="w-full p-0" align="start">
                     <Command>
                       <CommandInput placeholder="Search Departments..." />
                       <CommandEmpty>No department found.</CommandEmpty>
                       <CommandGroup>
-                        {receptionistDepartments.map((receptionistDepartment) => (
+                        {departments.map((department) => (
                           <CommandItem
-                            value={receptionistDepartment.value}
-                            key={receptionistDepartment.value}
+                            value={department.value}
+                            key={department.value}
                             onSelect={onChange}
                           >
                             <Check
                               className={cn(
                                 "mr-2 h-4 w-4",
-                                receptionistDepartment.value === value ? "opacity-100" : "opacity-0"
+                                department.value === value ? "opacity-100" : "opacity-0"
                               )}
                             />
-                            {receptionistDepartment.label}
+                            {department.label}
                           </CommandItem>
                         ))}
                       </CommandGroup>
@@ -303,7 +305,7 @@ export default function FormField({
                         {value
                           ? doctors?.find((doctor: any) => doctor?.value === value)?.label
                           : "Select doctor"}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        <ChevronsUpDown className="w-4 h-4 ml-2 opacity-50 shrink-0" />
                       </Button>
                     </FormControl>
                   </PopoverTrigger>
@@ -354,6 +356,53 @@ export default function FormField({
                   allowFraction
                   transition
                 />
+                <FormMessage>{fieldError?.message}</FormMessage>
+              </div>
+            )}
+            {select == "receiptType" && (
+              <div className="flex flex-col gap-2">
+                {label != '' && (
+                  <FormLabel className="capitalize">{label ? label : name}</FormLabel>
+                )}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className={cn("w-full justify-between", !value && "text-muted-foreground")}
+                      >
+                        {value
+                          ? receiptTypes.find((type) => type.value === value)?.label
+                          : "Select Type"}
+                        <ChevronsUpDown className="w-4 h-4 ml-2 opacity-50 shrink-0" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Search Types..." />
+                      <CommandEmpty>No type found.</CommandEmpty>
+                      <CommandGroup>
+                        {receiptTypes.map((type) => (
+                          <CommandItem
+                            value={type.value}
+                            key={type.value}
+                            onSelect={onChange}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                type.value === value ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {type.label}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
                 <FormMessage>{fieldError?.message}</FormMessage>
               </div>
             )}

@@ -1,4 +1,4 @@
-'use server'
+u'se server'
 
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
@@ -18,33 +18,52 @@ import db from './db'
 import { userMedicalFilesTable, userTable } from './db/schema'
 import { revalidatePath } from 'next/cache'
 import { sql } from 'drizzle-orm'
+import { fileTypes, imageTypes, tablesMap } from '@/constants'
+import { deleteAction } from '@/actions/index.actions'
 
 const generateFileName = (bytes = 32) => crypto.randomBytes(bytes).toString('hex')
 
 const maxFileSize = 5 * 1024 * 1024 // 5MB
 
-const acceptedPfpTypes = ['image/jpg', 'image/png', 'image/jpeg', 'image/webp']
-const acceptedTypes = ['image/jpg', 'image/png', 'image/jpeg', 'image/webp', 'application/pdf']
-
-export async function getSignUrl(
+export async function getSignUrl({
+    key,
+    type,
+    size,
+    checkSum,
+    userId,
+    pfp,
+    table,
+    imgsToDelete
+}: {
     key: string | '',
     type: string,
     size: number,
     checkSum?: string,
-    folderId?: number,
     userId?: string,
     pfp?: boolean,
-    lastPic?: string
-) {
+    table?: {
+        table?: keyof typeof tablesMap,
+        values?: any,
+        queryKey?: any[],
+        paths?: string[]
+    },
+    imgsToDelete?: {
+        name: string,
+        id?: number,
+        table?: keyof typeof tablesMap,
+        s3?: boolean
+    }[],
+}) {
     const { user } = await validateRequest()
     if (!user) throw new Error('Unauthorized')
     if (size > maxFileSize) throw new Error('File size too large')
     if (!userId) userId = user.id
 
-    if (pfp && !acceptedPfpTypes.includes(type)) throw new Error('Unsupported file type')
-    if (!pfp && !acceptedTypes.includes(type)) throw new Error('Unsupported file type')
+    if (pfp && !imageTypes.includes(type)) throw new Error('Unsupported file type')
+    if (!pfp && ![...imageTypes, ...fileTypes].includes(type)) throw new Error('Unsupported file type')
 
     const fileName = generateFileName() + `-${key}`;
+
     const putObjectCommand = new PutObjectCommand({
         Bucket: process.env.R2_BUCKET_NAME || '',
         Key: fileName,
@@ -59,12 +78,32 @@ export async function getSignUrl(
 
     const signedUrl = await getSignedUrl(S3, putObjectCommand, { expiresIn: 3600 })
 
-    if (folderId && fileName) {
-        await db.insert(userMedicalFilesTable).values({ name: fileName, folderId: folderId, userId: userId });
+    if (table && table.table) {
+        const tableDefinition = tablesMap[table.table];
+
+        if (!tableDefinition) {
+            throw new Error("Invalid table name");
+        }
+
+        if (fileName && Object.prototype.hasOwnProperty.call(tableDefinition, 'name')) {
+            table.values['name'] = fileName
+        }
+        if (type && Object.prototype.hasOwnProperty.call(tableDefinition, 'type')) {
+            table.values['type'] = type
+        }
+
+        await db.insert(tableDefinition).values(table.values);
     }
+
     if (pfp) {
         console.log('userId', userId)
         await db.update(userTable).set({ picture: fileName }).where(sql`${userTable.id} = ${userId}`);
+    }
+
+    if (imgsToDelete && imgsToDelete.length > 0) {
+        imgsToDelete.forEach(async (img) => {
+            await deleteFile({ name: img.name, s3: img.s3 ? true : false, table: img.table, id: img.id })
+        })
     }
 
     return {
@@ -75,64 +114,8 @@ export async function getSignUrl(
     }
 }
 
-export async function deleteFiles(names: string[], s3: boolean = false) {
-    console.log(names)
-    const { user } = await validateRequest()
-    if (!user) throw new Error('Unauthorized')
-
-    const userFolders = await db.query.userTable.findFirst({
-        with: {
-            folders: {
-                with: {
-                    files: true
-                }
-            }
-        },
-        where: (userTable, { eq }) => eq(userTable.id, user.id)
-    });
-
-    if (!userFolders) {
-        throw new Error('No folders found for the user.');
-    }
-
-
-    for (const fileName of names) {
-        // Find the file in the user's folders
-        const fileFound = userFolders.folders.some(folder =>
-            folder.files.some(file => file.name === fileName)
-        );
-
-        if (fileFound) {
-            console.log('file found')
-            if (s3) {
-                console.log('s3 found')
-                const deleteObjectCommand = new DeleteObjectCommand({
-                    Bucket: process.env.R2_BUCKET_NAME || '',
-                    Key: fileName
-                });
-
-                try {
-                    console.log('deleteObjectCommand')
-                    await S3.send(deleteObjectCommand);
-                } catch (error) {
-                    console.error(`Error deleting file from S3: ${fileName}`, error);
-                    // Handle S3 deletion error (e.g., logging, retrying, etc.)
-                }
-            }
-
-            try {
-                console.log('try delete from db')
-                await db.delete(userMedicalFilesTable).where(sql`${userMedicalFilesTable.name} = ${fileName}`);
-            } catch (error) {
-                console.error(`Error deleting file from database: ${fileName}`, error);
-            }
-        } else {
-            console.warn(`File not found in user's folders: ${fileName}`);
-        }
-    }
-}
-
-export async function deleteFile(name: string, medical: boolean = true, s3: boolean = false) {
+export async function deleteFile({ name, s3 = false, table, id }: { name: string, s3: boolean, table?: keyof typeof tablesMap, id?: number }) {
+    console.log(name, s3, table, id)
     const { user } = await validateRequest()
     if (!user) throw new Error('Unauthorized')
 
@@ -151,8 +134,8 @@ export async function deleteFile(name: string, medical: boolean = true, s3: bool
     }
 
     try {
-        if (medical) {
-            await db.delete(userMedicalFilesTable).where(sql`${userMedicalFilesTable.name} = ${name}`);
+        if (table && id) {
+            deleteAction(id, table)
         }
     } catch (error) {
         console.error(`Error deleting file from database: ${name}`, error);

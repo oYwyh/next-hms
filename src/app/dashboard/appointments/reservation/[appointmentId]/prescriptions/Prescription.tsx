@@ -4,13 +4,20 @@ import * as htmlToImage from 'html-to-image';
 import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
 import { Textarea } from "@/components/ui/Textarea";
-import { Prescriptions, TUser } from "@/types/index.types";
+import { TPrescriptions, TUser } from "@/types/index.types";
 import { useEffect, useState } from "react";
 import { createPrescription } from '@/actions/appointment.actions';
 import { useRouter } from 'next/navigation';
 import { getSignUrl } from '@/lib/r2';
 import { revalidatePath } from 'next/cache';
+import { prescriptions } from '@/constants';
 
+interface IReservation {
+    laboratories: string;
+    radiologies: string;
+    medicines: string;
+    [key: string]: string;  // Allow dynamic key access
+}
 
 export default function Prescription(
     {
@@ -19,6 +26,7 @@ export default function Prescription(
         prescription,
         patient,
         diagnosis,
+        existingPrescriptions,
         prescriptionType
     }:
         {
@@ -26,40 +34,27 @@ export default function Prescription(
             reservation: any,
             prescription: any,
             patient: any,
-            diagnosis: string
-            prescriptionType: Prescriptions
+            diagnosis: string,
+            existingPrescriptions: string[],
+            prescriptionType: TPrescriptions
         }
 ) {
-    const [values, setValues] = useState<string[]>(reservation[prescriptionType].split(','));
-    const [textareaValue, setTextareaValue] = useState<string>(reservation[prescriptionType].split(',').join('\n'));
-    const [prescriptionTypes] = useState(['laboratory', 'radiology', 'medicine']);
-    const [existingPrescriptionTypes, setExistingPrescriptionTypes] = useState<string[]>([]);
+    const presecriptionMap = {
+        laboratory: 'laboratories',
+        radiology: 'radiologies',
+        medicine: 'medicines'
+    };
+
+    // Access the appropriate field in the reservation object
+    const selectedField = presecriptionMap[prescriptionType];
+    const [values, setValues] = useState<string[]>(reservation[selectedField].split(','));
+    const [textareaValue, setTextareaValue] = useState<string>(reservation[selectedField].split(',').join('\n'));
     const [clicked, setClicked] = useState<boolean>(false);
     const router = useRouter()
 
     useEffect(() => {
-        const prescriptionTypesKeys = Object.keys(reservation).filter(key => prescriptionTypes.includes(key) && key !== prescriptionType);
-        const newExists = prescriptionTypesKeys
-            .filter((item) => {
-                const reservationHasValue = reservation[item] && reservation[item].trim() !== '';
-                const prescriptionHasValue = prescription[item] && prescription[item].trim() !== ''
-
-                // Keep the item if it has a value in reservation but not in prescription
-                // Remove the item if it has a value in both reservation and prescription
-                // Remove the item if it doesn't have a value in either reservation or prescription
-                return reservationHasValue && !prescriptionHasValue;
-            })
-            .map(item => item);
-
-        setExistingPrescriptionTypes(newExists);
-    }, [reservation, prescription, prescriptionTypes]);
-
-
-    useEffect(() => {
-        if (existingPrescriptionTypes.length > 0) {
-            console.log(existingPrescriptionTypes)
-        }
-    }, [existingPrescriptionTypes]);
+        existingPrescriptions = existingPrescriptions.filter(prescription => prescription !== prescriptionType);
+    }, [existingPrescriptions])
 
     const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setTextareaValue(e.target.value);
@@ -82,15 +77,31 @@ export default function Prescription(
 
         if (!dataUrl) return;
 
-        const signedUrlResult = await getSignUrl('prescription.png', 'image/png', dataUrl.size);
+        const signedUrlResult = await getSignUrl({
+            key: 'prescription',
+            type: 'image/jpg',
+            size: dataUrl.size
+        });
 
         const { url, fileName } = signedUrlResult.success;
 
         let result;
-        if (existingPrescriptionTypes.length === 0) {
-            result = await createPrescription(appointmentId, reservation.id, fileName, prescriptionType, true)
+        if (existingPrescriptions.length === 0) {
+            result = await createPrescription({
+                appointmentId,
+                reservationId: reservation.id,
+                name: fileName,
+                type: prescriptionType,
+                last: true
+            })
         } else {
-            result = await createPrescription(appointmentId, reservation.id, fileName, prescriptionType, false)
+            result = await createPrescription({
+                appointmentId,
+                reservationId: reservation.id,
+                name: fileName,
+                type: prescriptionType,
+                last: false
+            })
         }
 
         if (result && result.done) {
@@ -99,32 +110,28 @@ export default function Prescription(
                 method: 'PUT',
                 body: dataUrl,
                 headers: {
-                    'Content-Type': 'image/png',
+                    'Content-Type': 'image/jpg',
                 }
             });
 
             setClicked(true)
-            setExistingPrescriptionTypes((prevTypes) => {
-                const updatedTypes = prevTypes.filter((type) => type !== prescriptionType);
-                return updatedTypes;
-            });
         }
     }
 
     // Add this useEffect hook to handle redirection
     useEffect(() => {
-        if (existingPrescriptionTypes && clicked) {
-            if (existingPrescriptionTypes.length === 0) {
+        if (existingPrescriptions && clicked) {
+            if (existingPrescriptions.length === 0) {
                 router.push('/dashboard/appointments');
-            } else if (existingPrescriptionTypes.includes('laboratory')) {
+            } else if (existingPrescriptions.includes('laboratory')) {
                 router.push(`/dashboard/appointments/reservation/${appointmentId}/prescriptions/laboratory`);
-            } else if (existingPrescriptionTypes.includes('radiology')) {
+            } else if (existingPrescriptions.includes('radiology')) {
                 router.push(`/dashboard/appointments/reservation/${appointmentId}/prescriptions/radiology`);
-            } else if (existingPrescriptionTypes.includes('medicine')) {
+            } else if (existingPrescriptions.includes('medicine')) {
                 router.push(`/dashboard/appointments/reservation/${appointmentId}/prescriptions/medicine`);
             }
         }
-    }, [existingPrescriptionTypes, clicked]);
+    }, [existingPrescriptions, clicked]);
 
 
     return (

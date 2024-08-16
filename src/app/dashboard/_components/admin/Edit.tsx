@@ -16,7 +16,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { TEditSchema, TPasswordSchema, editSchema, passwordSchema } from "@/types/operations.types";
 import { edit, editPassword } from "@/actions/operations.actions";
-import RolesOperationsForm from "@/app/dashboard/_components/admin/RolesOperationsForm";
+import RolesOperationsForm from "@/app/dashboard/_components/RolesOperationsForm";
 import ManagePassword from "./ManagePassword";
 import { Button } from "@/components/ui/Button";
 import { THour, TIndex, TWorkHour, UserRoles } from "@/types/index.types";
@@ -27,7 +27,7 @@ type TEdit = {
   userId: string;
   userData: { [key: string]: string } & TEditSchema;
   workTime: any;
-  setPopOpen: React.Dispatch<React.SetStateAction<boolean | undefined>>;
+  setPopOpen: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 export default function Edit({ role, userId, userData, workTime, setPopOpen }: TEdit) {
@@ -59,6 +59,7 @@ export default function Edit({ role, userId, userData, workTime, setPopOpen }: T
     nationalId: userData.nationalId || "",
     dob: new Date(userData.dob) || new Date(),
     gender: userData.gender || "",
+    fee: userData.fee || "",
     specialty: userData.specialty || "",
     department: userData.department || "",
   });
@@ -85,7 +86,7 @@ export default function Edit({ role, userId, userData, workTime, setPopOpen }: T
 
 
   const onEditAccount = async (data: TIndex<string> & TEditSchema) => {
-    const { changedFields, unChangedFields } = compareFields(data, userData, ['role', 'id', 'workTime']);
+    const { changedFields, unChangedFields } = compareFields(data, userData, ['role', 'id', 'workTime', 'table']);
 
     unChangedFields.forEach(field => delete data[field]);
 

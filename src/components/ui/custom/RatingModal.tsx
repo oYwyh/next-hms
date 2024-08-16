@@ -41,7 +41,7 @@ export default function RatingModal({ user, appointmentId, doctorId }: { user: T
     }
 
     return (
-        <Dialog open={open} onOpenChange={setOpen} defaultOpen={true}>
+        <Dialog defaultOpen={true}>
             <DialogContent className="w-fit h-fit">
                 <DialogHeader>
                     <DialogTitle>Review the appointment</DialogTitle>

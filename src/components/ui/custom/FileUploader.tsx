@@ -1,10 +1,10 @@
 'use client'
 
-import { deleteFile, deleteFiles, getSignUrl } from "@/lib/r2";
+import { deleteFile, getSignUrl } from "@/lib/r2";
 import { Dispatch, SetStateAction, useRef } from "react";
 import Uppy, { UppyFile } from "@uppy/core";
 import Webcam from "@uppy/webcam";
-import { DashboardModal } from "@uppy/react";
+import { Dashboard, DashboardModal } from "@uppy/react";
 import ImageEditor from "@uppy/image-editor";
 import AwsS3 from '@uppy/aws-s3';
 
@@ -15,34 +15,42 @@ import "@uppy/image-editor/dist/style.min.css";
 import '@uppy/informer/dist/style.min.css';
 import { useQueryClient } from "@tanstack/react-query";
 import { revalidatePathAction } from "@/actions/index.actions";
+import { computeSHA256, invalidateQueries } from "@/lib/funcs";
+import { tablesMap } from "@/constants";
+import { Dialog, DialogContent } from "@/components/ui/Dialog";
+import { DialogTitle } from "@radix-ui/react-dialog";
 
 export default function FileUploader(
     {
         open,
         setOpen,
-        folderId,
         userId,
         pfp = false,
-        lastPic,
+        table,
+        imgsToDelete,
+        limit,
     }
         : {
             open: boolean,
             setOpen: Dispatch<SetStateAction<boolean>>
-            folderId?: number,
             userId?: string,
-            pfp?: boolean
-            lastPic?: string,
+            pfp?: boolean,
+            table?: {
+                table?: keyof typeof tablesMap,
+                values?: any,
+                queryKey?: any[],
+                paths?: string[]
+            },
+            imgsToDelete?: {
+                name: string,
+                table?: keyof typeof tablesMap
+                id?: number,
+                s3?: boolean
+            }[],
+            limit?: number
         }) {
     const preparedFilesRef = useRef<string[]>([]);
     const queryClient = useQueryClient()
-
-    const computeSHA256 = async (file: any) => {
-        const buffer = await file.arrayBuffer();
-        const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-        return hashHex;
-    }
 
     const uppy = new Uppy({
         autoProceed: false,
@@ -54,33 +62,25 @@ export default function FileUploader(
 
     uppy.use(AwsS3, {
         getUploadParameters: async (file: any) => {
-            console.log(file)
             if (!file || !file.data) throw new Error('No file found');
             try {
                 const checkSum = await computeSHA256(file.data);
-                const signedUrlResult = await getSignUrl(
-                    file.source == 'Webcam' ? file.name : file.data.name,
-                    file.data.type,
-                    file.data.size,
+                const signedUrlResult = await getSignUrl({
+                    key: file.source == 'Webcam' ? file.name : file.data.name,
+                    type: file.data.type,
+                    size: file.data.size,
                     checkSum,
-                    folderId ? folderId : undefined,
-                    userId ? userId : undefined,
-                    pfp ? true : undefined,
-                    lastPic ? lastPic : undefined
-                );
+                    userId: userId ? userId : undefined,
+                    pfp: pfp ? true : undefined,
+                    table: table ? table : undefined,
+                    imgsToDelete: imgsToDelete,
+                });
 
                 if (!signedUrlResult || !signedUrlResult.success) throw new Error('Failed to get sign url');
-
-                // const { url, fileName, folderId: s3FolderId } = signedUrlResult.success;
-                // if (folderId != s3FolderId) throw new Error('Folder id does not match');
 
                 const { url, fileName } = signedUrlResult.success;
 
                 preparedFilesRef.current.push(fileName);
-
-                if (lastPic) {
-                    deleteFile(lastPic, false, true)
-                }
 
                 return {
                     method: 'PUT',
@@ -96,25 +96,36 @@ export default function FileUploader(
             }
         }
     }).on('complete', async (result) => {
+        if (table && table.queryKey) {
+            invalidateQueries({ queryClient, key: table.queryKey });
+        }
+        if (table && table.paths && table.paths.length > 0) {
+            for (const path of table.paths) {
+                await revalidatePathAction(path)
+            }
+        }
+        if (pfp) {
+            await revalidatePathAction('/profile')
+        }
         setOpen(false)
-        if (folderId) {
-            await queryClient.invalidateQueries({ queryKey: ['files'] })
-            await revalidatePathAction('/files')
-        }
-        if (pfp) {
-            await revalidatePathAction('/doctor/profile')
-        }
     }).on('cancel-all', async () => {
-        await deleteFiles(preparedFilesRef.current, true);
-        if (folderId) {
-            await queryClient.invalidateQueries({ queryKey: ['files', folderId] })
+        preparedFilesRef.current.map(async (fileName) => {
+            await deleteFile({ name: fileName, s3: true })
+        })
+        if (table && table.queryKey) {
+            invalidateQueries({ queryClient, key: table.queryKey });
+        }
+        if (table && table.paths && table.paths.length > 0) {
+            for (const path of table.paths) {
+                await revalidatePathAction(path)
+            }
         }
         if (pfp) {
-            await revalidatePathAction('/doctor/profile')
+            await revalidatePathAction('/profile')
         }
     }).on('file-added', (file) => {
-        if (pfp) {
-            if (uppy.getFiles().length > 1) {
+        if (limit) {
+            if (uppy.getFiles().length > limit) {
                 uppy.removeFile(file.id);
             }
         }
@@ -122,17 +133,18 @@ export default function FileUploader(
 
     return (
         <>
-            <DashboardModal
-                id="dashboard"
-                closeAfterFinish={true}
-                closeModalOnClickOutside={true}
-                open={open}
-                uppy={uppy}
-                proudlyDisplayPoweredByUppy={false}
-                showProgressDetails={true}
-                theme="dark"
-
-            />
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent className="max-w-fit p-0 m-0 border-0 text-white">
+                    <DialogTitle className="absolute h-0 w-0 p-0 m-0 space-x-0 space-y-0"></DialogTitle>
+                    <Dashboard
+                        id="dashboard"
+                        uppy={uppy}
+                        proudlyDisplayPoweredByUppy={false}
+                        showProgressDetails={true}
+                        theme="dark"
+                    />
+                </DialogContent>
+            </Dialog>
         </>
     );
 }

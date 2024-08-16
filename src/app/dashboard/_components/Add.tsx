@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useCallback, useState } from "react";
+import { Dispatch, SetStateAction, useCallback, useState } from "react";
 
 import { addSchema, TAddSchema } from "@/types/operations.types";
 import { TbaseSchema, THour, TIndex, TTables, UserRoles } from "@/types/index.types";
@@ -18,10 +18,22 @@ import {
 import { add } from "@/actions/operations.actions";
 import { Button } from "@/components/ui/Button";
 import { daysList } from "@/constants";
-import RolesOperationsForm from "@/app/dashboard/_components/admin/RolesOperationsForm";
+import RolesOperationsForm from "@/app/dashboard/_components/RolesOperationsForm";
 import { handleError, normalizeDataFields } from "@/lib/funcs";
 
-export default function Add({ role }: { role: TTables }) {
+export default function Add(
+  {
+    role,
+    dialog = true,
+    pwd = true,
+    setState
+  }:
+    {
+      role: UserRoles,
+      dialog?: boolean,
+      pwd?: boolean,
+      setState?: Dispatch<SetStateAction<any>>
+    }) {
   const [open, setOpen] = useState(false);
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [selectedHours, setSelectedHours] = useState<THour[]>([]);
@@ -56,13 +68,16 @@ export default function Add({ role }: { role: TTables }) {
 
     const result = role === 'doctor'
       ? await add({ data, role, selectedDays, selectedHours, })
-      : await add({ data, role });
+      : await add({ data, role })
 
     if (result?.success) {
       form.reset();
       setSelectedDays([]);
       setSelectedHours([]);
       setOpen(false);
+      if (setState) {
+        setState(result.data);
+      }
     } else if (result?.error) {
       handleError(form, result.error);
     }
@@ -70,17 +85,36 @@ export default function Add({ role }: { role: TTables }) {
 
   return (
     <>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button variant="outline" className='capitalize'>Add {role}</Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle className='capitalize'>Add {role}</DialogTitle>
-            <DialogDescription>
-              Anyone who has this link will be able to view this.
-            </DialogDescription>
-          </DialogHeader>
+      {dialog ? (
+        <>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className='capitalize'>Add {role}</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle className='capitalize'>Add {role}</DialogTitle>
+                <DialogDescription>
+                  Anyone who has this link will be able to view this.
+                </DialogDescription>
+              </DialogHeader>
+              <RolesOperationsForm
+                role={role}
+                form={form}
+                onSubmit={onSubmit}
+                daysList={daysList}
+                selectedDays={selectedDays}
+                setSelectedDays={setSelectedDays}
+                selectedHours={selectedHours}
+                setSelectedHours={setSelectedHours}
+                pwd={pwd}
+                operation={'add'}
+              />
+            </DialogContent>
+          </Dialog>
+        </>
+      ) : (
+        <>
           <RolesOperationsForm
             role={role}
             form={form}
@@ -90,10 +124,11 @@ export default function Add({ role }: { role: TTables }) {
             setSelectedDays={setSelectedDays}
             selectedHours={selectedHours}
             setSelectedHours={setSelectedHours}
+            pwd={pwd}
             operation={'add'}
           />
-        </DialogContent>
-      </Dialog>
+        </>
+      )}
     </>
   );
 }
