@@ -24,7 +24,7 @@ export default function Receipt() {
         return;
     }
 
-    const { reservation: { appointmentId, receiptId } } = context;
+    const { reservation: { appointmentId } } = context;
 
     const [appointment, setAppointment] = useState<TAppointment>();
     const [user, setUser] = useState<TUser>();
@@ -87,8 +87,8 @@ export default function Receipt() {
             service: result.receipt.service,
             amount: result.receipt.amount,
             userId: result.receipt.userId,
-            doctorId: result.receipt.doctorId,
-            appointmentId: result.receipt.appointmentId,
+            doctorId: result.receipt.doctorId || 0,
+            appointmentId: result.receipt.appointmentId || 0,
             receptionistId: result.receipt.receptionistId,
             date: result.receipt.date as Date,
             type: result.receipt.type as TReceiptTypes,
@@ -96,21 +96,21 @@ export default function Receipt() {
             updatedAt: result.receipt.updatedAt || new Date()
         })
         setReceptionist({
-            id: result.receptionist.id as string,
-            receptionistId: result.receptionist.receptionistId as number,
-            firstname: result.receptionist.firstname,
-            lastname: result.receptionist.lastname,
-            username: result.receptionist.username,
-            email: result.receptionist.email,
-            phone: result.receptionist.phone,
-            nationalId: result.receptionist.nationalId,
-            dob: result.receptionist.dob,
-            gender: result.receptionist.gender,
-            picture: result.receptionist.picture,
-            role: result.receptionist.role as UserRoles,
-            department: result.receptionist.department as TDepartments,
-            createdAt: result.receptionist.createdAt || new Date(),
-            updatedAt: result.receptionist.updatedAt || new Date(),
+            id: result.receptionist?.id as string,
+            receptionistId: result.receptionist?.receptionistId as number,
+            firstname: result.receptionist?.firstname,
+            lastname: result.receptionist?.lastname,
+            username: result.receptionist?.username,
+            email: result.receptionist?.email,
+            phone: result.receptionist?.phone,
+            nationalId: result.receptionist?.nationalId,
+            dob: result.receptionist?.dob,
+            gender: result.receptionist?.gender,
+            picture: result.receptionist?.picture,
+            role: result.receptionist?.role as UserRoles,
+            department: result.receptionist?.department as TDepartments,
+            createdAt: result.receptionist?.createdAt || new Date(),
+            updatedAt: result.receptionist?.updatedAt || new Date(),
         })
 
         return {

@@ -1,5 +1,5 @@
 import { DataTable } from "@/components/ui/table/DataTable";
-import { DoctorColumnsTypes, UserColumnsTypes, DoctorTableColumns, UserTableColumns, AdminTableColumns, DoctorTableColumnsWithPrivileges, UserTableColumnsWithPrivileges, AdminTableColumnsWithPrivileges, ReceptionistTableColumnsWithPrivileges, ReceptionistTableColumns } from "./columns";
+import { DoctorColumnsTypes, UserColumnsTypes, DoctorTableColumns, UserTableColumns, AdminTableColumns, DoctorTableColumnsWithPrivileges, UserTableColumnsWithPrivileges, AdminTableColumnsWithPrivileges, ReceptionistTableColumnsWithPrivileges, ReceptionistTableColumns } from "../columns";
 import db from "@/lib/db";
 import AddPage from "../Add";
 import { useGetUser } from "@/hooks/useGetUser";

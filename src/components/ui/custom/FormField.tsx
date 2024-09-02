@@ -39,6 +39,7 @@ import { Rating } from "react-simple-star-rating";
 import { departments, receiptTypes, specialties as specialtyOpts } from "@/constants";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
+import CurrencyInput from "react-currency-input-field";
 
 interface FormFieldProps {
   form: {
@@ -47,7 +48,7 @@ interface FormFieldProps {
   name: string;
   label?: string;
   error?: string;
-  defaultValue?: string;
+  defaultValue?: string | number;
   disabled?: boolean;
   type?: string;
   select?: string;
@@ -62,6 +63,7 @@ interface FormFieldProps {
   isTextarea?: boolean;
   placeholder?: string;
   rating?: boolean;
+  currency?: boolean;
 }
 
 export default function FormField({
@@ -81,6 +83,7 @@ export default function FormField({
   isTextarea,
   placeholder,
   rating,
+  currency,
 }: FormFieldProps) {
   const {
     field,
@@ -98,7 +101,7 @@ export default function FormField({
         name={name}
         render={({ field: { onChange, value = "" } }) => (
           <FormItem className="w-full">
-            {!isTextarea && !select && !switchValue && !rating && name != 'dob' && (
+            {!isTextarea && !select && !switchValue && !rating && name != 'dob' && !currency && (
               <>
                 {type != 'hidden' && label != '' && (
                   <FormLabel className="capitalize">{label ? label : name}</FormLabel>
@@ -406,7 +409,23 @@ export default function FormField({
                 <FormMessage>{fieldError?.message}</FormMessage>
               </div>
             )}
-          </FormItem >
+            {currency && setState && (
+              <div className="flex flex-col gap-2">
+                {label != '' && (
+                  <FormLabel className="capitalize">{label ? label : name}</FormLabel>
+                )}
+                <CurrencyInput
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  id="input-example"
+                  name="input-name"
+                  placeholder="Amount"
+                  decimalsLimit={2}
+                  onValueChange={(value) => setState(value)}
+                />
+                <FormMessage>{fieldError?.message}</FormMessage>
+              </div>
+            )}
+          </FormItem>
         )
         }
       />

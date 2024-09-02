@@ -86,19 +86,22 @@ export function DataTable<TData, TValue>({
   return (
     <div>
       <div className="flex items-center justify-between py-4">
-        <div className="flex items-center space-x-2">
-          <Input
-            placeholder={`Search ${search ? search : "email"}`}
-            value={table.getColumn(search)?.getFilterValue() as string || ""}
-            onChange={(event) => {
-              table.getColumn(search)?.setFilterValue(event.target.value)
-            }}
-            className="max-w-sm"
-          />
-          <DataTableToolbar table={table} filters={filters} />
-        </div>
-        <DataTableViewOptions table={table} restrictedColumns={restrictedColumns} />
-
+        {search == undefined && (
+          <>
+            <div className="flex items-center space-x-2">
+              <Input
+                placeholder={`Search ${search ? search : "email"}`}
+                value={table.getColumn(search)?.getFilterValue() as string || ""}
+                onChange={(event) => {
+                  table.getColumn(search)?.setFilterValue(event.target.value)
+                }}
+                className="max-w-sm"
+              />
+              <DataTableToolbar table={table} filters={filters} />
+            </div>
+            <DataTableViewOptions table={table} restrictedColumns={restrictedColumns} />
+          </>
+        )}
       </div>
       <div className="rounded-md border">
         <Table>

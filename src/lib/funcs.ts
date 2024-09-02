@@ -111,3 +111,16 @@ export function invalidateQueries({ queryClient, key }: { queryClient: QueryClie
         type: 'all',
     });
 }
+
+export const handleRequiredFields = ({ form, fields }: { form: UseFormReturn<any>, fields: string[] }): boolean => {
+    let hasError = false;
+
+    fields.forEach(field => {
+        if (!form.getValues(field)) {
+            form.setError(`${field}`, { type: 'server', message: `${field} is required` });
+            hasError = true;
+        }
+    });
+
+    return hasError;
+}

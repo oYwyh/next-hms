@@ -9,29 +9,41 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/DropdownMenu"
 import { DataTableColumnHeader } from "@/components/ui/table/DataTableColumnHeader"
-import { baseColumns, BaseColumnsTypes, SwitchTableColumn, SelectTableColumn, ExportTableColumn } from "@/constants/columns"
+import { SwitchTableColumn, SelectTableColumn, ExportTableColumn } from "@/constants/columns"
 import { TDepartments, TWorkHour } from "@/types/index.types"
 import Actions from "@/app/dashboard/_components/admin/Actions"
 
 
-export type UserColumnsTypes = BaseColumnsTypes;
+export type UserColumnsTypes = {
+    id: string | number;
+    firstname: string;
+    lastname: string;
+    username: string;
+    email: string;
+    phone: string;
+    nationalId: string;
+    age: string;
+    gender: string;
+    role: string;
+}
 
-export type ReceptionistColumnsTypes = BaseColumnsTypes & {
+
+export type ReceptionistColumnsTypes = UserColumnsTypes & {
     department: TDepartments
 }
-export type AdminColmnsTypes = BaseColumnsTypes & {
+export type AdminColmnsTypes = UserColumnsTypes & {
     super: boolean
 };
 
-export type DoctorColumnsTypes = BaseColumnsTypes & {
+export type DoctorColumnsTypes = UserColumnsTypes & {
     specialty: string | null; // Allow null values for specialty
     workTime: { workHour: any; day: string }[];
 }
 
-const userColumns = baseColumns;
-const adminColumns = baseColumns;
-const receptionistColumns = baseColumns.concat('department');
-const doctorColumns = baseColumns.concat('fee', 'specialty');
+const userColumns = ['id', 'firstname', 'lastname', 'username', 'email', 'phone', 'nationalId', 'dob', 'gender', 'role', 'table']
+const adminColumns = userColumns;
+const receptionistColumns = userColumns.concat('department');
+const doctorColumns = userColumns.concat('fee', 'specialty');
 
 const ActionsTableColumn = [
     {
@@ -57,7 +69,7 @@ const ActionsTableColumn = [
                     return acc;
                 }, {});
             } else {
-                rowData = baseColumns.reduce((acc: { [key: string]: DoctorColumnsTypes }, column: string) => {
+                rowData = userColumns.reduce((acc: { [key: string]: DoctorColumnsTypes }, column: string) => {
                     acc[column] = row.getValue(column);
                     return acc;
                 }, {});

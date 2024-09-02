@@ -21,6 +21,11 @@ export default async function ReceptionistPage() {
                             Book an appointment
                         </Button>
                     </Link>
+                    <Link href="/dashboard/receipts">
+                        <Button>
+                            Receipts
+                        </Button>
+                    </Link>
                     <form action={logout}>
                         <Button>Sign out</Button>
                     </form>

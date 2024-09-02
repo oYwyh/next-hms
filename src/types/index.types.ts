@@ -8,7 +8,7 @@ export type UserRoles = "admin" | "user" | "doctor" | 'receptionist';
 export type TPrescriptions = 'laboratory' | 'radiology' | 'medicine';
 export type THour = { day: string; value: { from: string; to: string } };
 export type TGenders = 'male' | 'female'
-export type TTables = "admin" | "doctor" | "user" | "receptionist" | "appointment" | "prescription" | "review";
+export type TTables = "admin" | "doctor" | "user" | "receptionist" | "appointment" | "prescription" | "review" | "receipt";
 export type TIndex<T> = { [key: string]: T }
 export type TReceiptTypes = "credit" | "cash" | 'electronic';
 

@@ -323,10 +323,8 @@ export const receiptTable = pgTable("receipt", {
     .notNull()
     .references(() => userTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
   doctorId: integer("doctorId")
-    .notNull()
     .references(() => doctorTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
   appointmentId: integer("appointmentId")
-    .notNull()
     .references(() => appointmentTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
   receptionistId: integer("receptionistId").references(() => receptionistTable.id, { onDelete: "cascade", onUpdate: "cascade" }).notNull(),
   date: timestamp("date", { withTimezone: true }).notNull(),

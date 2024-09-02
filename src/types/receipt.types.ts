@@ -1,13 +1,12 @@
 import { z } from "zod"
 
 export const createSchema = z.object({
-    service: z.string(),
+    service: z.string().min(1, "Service is required"),
     amount: z.string(),
-    userId: z.string(),
-    doctorId: z.number(),
-    appointmentId: z.number(),
-    receptionistId: z.number(),
-    date: z.string().min(1, "Date is required"),
+    userId: z.string().optional(),
+    doctorId: z.number().optional(),
+    appointmentId: z.number().optional(),
+    receptionistId: z.number().optional(),
     type: z.enum(["cash", "credit", 'electronic'])
 })
 

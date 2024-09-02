@@ -6,20 +6,6 @@ import * as XLSX from 'xlsx'
 import SwitchInput from "@/components/ui/custom/SwitchInput"
 import Name, { TnameSchema } from "@/components/ui/custom/Name"
 
-export type BaseColumnsTypes = {
-  id: string | number;
-  firstname: string;
-  lastname: string;
-  username: string;
-  email: string;
-  phone: string;
-  nationalId: string;
-  age: string;
-  gender: string;
-  role: string;
-}
-
-export const baseColumns = ['id', 'firstname', 'lastname', 'username', 'email', 'phone', 'nationalId', 'dob', 'gender', 'role', 'table']
 
 export const SelectTableColumn = [
   {
